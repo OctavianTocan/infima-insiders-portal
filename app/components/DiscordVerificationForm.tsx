@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { Form } from 'react-router';
+import { useDiscord } from './DiscordContext';
 
 interface DiscordVerificationFormProps {
-  onVerificationSuccess: (discordUsername: string) => void;
-  onVerificationFailure: (error: string) => void;
   onSupportRequest: () => void;
 }
 
 const DISCORD_HANDLE_PATTERN = /^@([a-z0-9_]{2,32})$/i;
 
 const DiscordVerificationForm: React.FC<DiscordVerificationFormProps> = ({
-  onVerificationSuccess,
-  onVerificationFailure,
   onSupportRequest,
 }) => {
+  const { state, actions } = useDiscord();
   const [discordUsername, setDiscordUsername] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const isVerifying = state.isLoading || state.verificationStatus === 'verifying';
+  const error = state.error;
 
   const getNormalizedHandle = (value: string) => {
     const trimmed = value.trim();
@@ -38,8 +36,12 @@ const DiscordVerificationForm: React.FC<DiscordVerificationFormProps> = ({
   const handleInputChange = (value: string) => {
     setDiscordUsername(value);
     if (error) {
-      setError(null);
+      actions.clearError();
     }
+  };
+
+  const handleSubmit = () => {
+    actions.startVerification();
   };
 
   return (
@@ -78,7 +80,7 @@ const DiscordVerificationForm: React.FC<DiscordVerificationFormProps> = ({
             type='submit'
             className='verify-btn'
             disabled={isVerifying || !isHandleValid}
-            onClick={() => setIsVerifying(true)}
+            onClick={handleSubmit}
           >
             {isVerifying ? 'Verifying...' : 'Verify Discord'}
           </button>

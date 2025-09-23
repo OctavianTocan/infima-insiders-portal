@@ -1,18 +1,21 @@
 import React from 'react';
+import { useDiscord } from './DiscordContext';
 
 interface DiscordErrorDisplayProps {
-  error: string;
-  username?: string;
-  userRoles?: { id: string; name: string }[];
   discordInviteLink?: string;
 }
 
 const DiscordErrorDisplay: React.FC<DiscordErrorDisplayProps> = ({
-  error,
-  username,
-  userRoles,
   discordInviteLink = 'https://discord.gg/your-invite-link' // Replace with your actual invite
 }) => {
+  const { state } = useDiscord();
+  const { error, user } = state;
+  const username = user?.username;
+  const userRoles = user?.roles;
+
+  if (!error) {
+    return null;
+  }
   const getErrorMessage = () => {
     switch (error) {
       case 'not_member':
