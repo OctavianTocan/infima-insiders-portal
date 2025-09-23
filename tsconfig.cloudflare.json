@@ -9,6 +9,7 @@
     "worker-configuration.d.ts"
   ],
   "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
     "composite": true,
     "strict": true,
     "lib": ["DOM", "DOM.Iterable", "ES2022"],

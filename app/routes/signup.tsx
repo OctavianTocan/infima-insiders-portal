@@ -1,21 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import type { Route } from './+types/signup';
 import { redirect } from 'react-router';
 
-// Updated components for Discord OAuth
-import DiscordOAuthButton from '../components/DiscordOAuthButton';
-import DiscordErrorDisplay from '../components/DiscordErrorDisplay';
-import SupportRequestForm from '../components/SupportRequestForm';
+// Import signup flow components
+import { StepIndicator, InfoSection, FooterLinks, SignupFlow } from '../components';
 
-// Updated step flow - removed manual Discord verification
-type FormStep = 'discord-oauth' | 'github-oauth' | 'support-request' | 'complete';
+// Import custom hook for signup flow logic
+import { useSignupFlow } from '../hooks/useSignupFlow';
 
-// SERVER-SIDE LOADER (handles Discord OAuth results and GitHub setup)
+/**
+ * Server-side loader for the signup route.
+ * Handles OAuth callback parameters from Discord and GitHub,
+ * and prepares data for the signup flow.
+ *
+ * Processes URL parameters to determine OAuth results and user state,
+ * then returns structured data for the client component.
+ *
+ * @param request - The incoming request object containing URL parameters
+ * @param context - Route context containing Cloudflare environment variables
+ * @returns Structured loader data with OAuth results and configuration
+ */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
-  const env = context.cloudflare.env;
+  const env = context.cloudflare.env as any; // Cast to any for Cloudflare Workers compatibility
   
-  // Handle Discord OAuth results
+  // Extract Discord OAuth callback parameters
   const discordSuccess = url.searchParams.get('discord_success');
   const discordError = url.searchParams.get('discord_error');
   const discordUsername = url.searchParams.get('discord_username');
@@ -24,23 +33,24 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const discordVerified = url.searchParams.get('discord_verified');
   const userRoles = url.searchParams.get('user_roles');
   
-  // Handle GitHub OAuth results (existing)
+  // Extract GitHub OAuth callback parameters
   const username = url.searchParams.get('username');
   const status = url.searchParams.get('status');
   const isCollaborator = url.searchParams.get('isCollaborator') === 'true';
   const hasPendingInvitation = url.searchParams.get('hasPendingInvitation') === 'true';
   const error = url.searchParams.get('error');
   
-  // Parse user roles if available
+  // Parse user roles from JSON string if present
   let parsedUserRoles: { id: string; name: string }[] = [];
   try {
     if (userRoles) {
       parsedUserRoles = JSON.parse(decodeURIComponent(userRoles));
     }
-  } catch (error) {
-    console.error('Error parsing user roles:', error);
+  } catch (parseError) {
+    console.error('Error parsing user roles from URL parameter:', parseError);
   }
   
+  // Generate status message based on OAuth results
   let message = null;
   if (error) {
     message = `Error: ${error}`;
@@ -68,13 +78,25 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   };
 }
 
-// SERVER-SIDE ACTION (handles support requests)
+
+/**
+ * Server-side action for handling support requests.
+ * Processes form submissions for Discord verification support.
+ *
+ * Validates form data, creates a support request record, and sends
+ * webhook notifications if configured. Returns success/error status
+ * for client-side feedback.
+ *
+ * @param request - The form submission request containing support data
+ * @param context - Route context containing Cloudflare environment variables
+ * @returns Action response with success status and request ID, or error details
+ */
 export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
   const actionType = formData.get('actionType') as string;
-  const env = context.cloudflare.env;
+  const env = context.cloudflare.env as any; // Cast to any for Cloudflare Workers compatibility
   
-  //User requests support. Triggered when 'submit' is clicked on support form.
+  // Handle support request submission
   if (actionType === 'support-request') {
     const supportData = {
       discordUsername: formData.get('discordUsername') as string,
@@ -86,302 +108,125 @@ export async function action({ request, context }: Route.ActionArgs) {
     try {
       const requestId = await createSupportRequest(supportData, env);
       return { success: true, requestId };
-    } catch (error) {
-      return { success: false, error: (error as Error).message };
+    } catch (submissionError) {
+      console.error('Support request submission failed:', submissionError);
+      return { success: false, error: (submissionError as Error).message };
     }
   }
   
-  return { success: false, error: 'Unknown action' };
+  return { success: false, error: 'Unknown action type' };
 }
 
-// Support request function (migrated backend logic)
+/**
+ * Creates a support request for Discord verification issues.
+ * Generates a unique request ID and sends webhook notification if configured.
+ *
+ * This function handles the backend processing of support requests,
+ * ensuring proper logging and external notifications for follow-up.
+ *
+ * @param data - Support request data containing user information and error details
+ * @param env - Environment variables for webhook configuration
+ * @returns Unique request ID for tracking the support case
+ * @throws Error if webhook notification fails (non-blocking)
+ */
 async function createSupportRequest(data: any, env: any): Promise<string> {
   const requestId = crypto.randomUUID();
   
-  // Send webhook notification (if configured)
+  // Send webhook notification for support tracking (if configured)
   if (env.WEBHOOK_URL) {
-    await fetch(env.WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event: 'discord_support_request',
-        requestId,
-        timestamp: new Date().toISOString(),
-        data: {
-          discordUsername: data.discordUsername,
-          discordId: data.discordId,
-          message: data.message,
-          verificationError: data.verificationError,
-        }
-      })
-    });
+    try {
+      await fetch(env.WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'discord_support_request',
+          requestId,
+          timestamp: new Date().toISOString(),
+          data: {
+            discordUsername: data.discordUsername,
+            discordId: data.discordId,
+            message: data.message,
+            verificationError: data.verificationError,
+          }
+        })
+      });
+      console.log(`Support request ${requestId} notification sent successfully`);
+    } catch (webhookError) {
+      console.error('Failed to send support request webhook notification:', webhookError);
+      // Don't throw - webhook failure shouldn't block support request creation
+    }
   }
   
   return requestId;
 }
 
-// REACT COMPONENT (updated for Discord OAuth flow)
-export default function SignupPage({ loaderData, actionData }: Route.ComponentProps) {
-  const { 
-    clientId, 
-    redirectUri, 
-    message: initialMessage,
-    discordSuccess,
+/**
+ * SignupPage component implementing a multi-step OAuth flow.
+ * Handles Discord verification and GitHub repository access setup.
+ *
+ * This component follows React composition patterns by breaking down
+ * the UI into focused, single-responsibility components and extracting
+ * complex state logic into a custom hook.
+ *
+ * @param loaderData - Data from the server loader (OAuth results, config)
+ * @param actionData - Data from server actions (support request results)
+ */
+export default function SignupPage({
+  loaderData,
+  actionData
+}: Route.ComponentProps) {
+  const {
+    clientId,
+    redirectUri,
     discordError,
     discordUsername,
-    discordId,
-    discordDisplayName,
-    discordVerified,
     userRoles
   } = loaderData;
-  
-  const [currentStep, setCurrentStep] = useState<FormStep>('discord-oauth');
-  const [verifiedDiscordUsername, setVerifiedDiscordUsername] = useState<string>('');
-  const [supportRequestId, setSupportRequestId] = useState<string>('');
-  const [message, setMessage] = useState<string | null>(initialMessage);
 
-  // Handle Discord OAuth results on mount
-  useEffect(() => {
-    if (discordSuccess && discordVerified) {
-      // User has verified role in Discord server
-      setVerifiedDiscordUsername(discordUsername || '');
-      setCurrentStep('github-oauth');
-    } else if (discordError) {
-      // Discord verification failed - show error and support request
-      setCurrentStep('support-request');
-    }
-  }, [discordSuccess, discordVerified, discordError, discordUsername]);
+  // Extract signup flow logic into custom hook
+  const {
+    currentStep,
+    verifiedDiscordUsername,
+    supportRequestId,
+    message,
+    goToDiscord,
+    handleSupportSubmitted,
+  } = useSignupFlow(loaderData, actionData);
 
-  // Handle server action responses (support requests)
-  useEffect(() => {
-    if (actionData) {
-      if (actionData.success && actionData.requestId) {
-        setSupportRequestId(actionData.requestId);
-        setCurrentStep('complete');
-      }
-    }
-  }, [actionData]);
-
-  // Updated steps for Discord OAuth flow
-  const steps = [
-    { key: 'discord-oauth', label: 'Connect Discord' },
-    { key: 'github-oauth', label: 'Connect GitHub' },
-    { key: 'complete', label: 'Complete' }
-  ];
-
-  const getStepIndex = () => {
-    if (currentStep === 'support-request') {
-      return 0; // Show as first step when support needed
-    }
-    return steps.findIndex(s => s.key === currentStep);
-  };
-
-  const StepIndicator = () => (
-    <div className='step-dots'>
-      {steps.map((step, idx) => (
-        <div key={step.key} className={`step-dot ${idx === getStepIndex() ? 'active' : ''} ${idx < getStepIndex() ? 'completed' : ''}`}>
-          <span className='step-number'>{idx + 1}</span>
-        </div>
-      ))}
-    </div>
-  );
-
-  const handleLogin = () => {
+  /**
+   * Initiates GitHub OAuth login flow.
+   * Constructs authorization URL and redirects user to GitHub.
+   */
+  const handleGitHubLogin = () => {
     const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read:user`;
     window.location.href = authUrl;
   };
 
-  const handleBackToDiscord = () => {
-    setCurrentStep('discord-oauth');
-    // Clear URL parameters
-    window.history.replaceState({}, document.title, window.location.pathname);
-  };
-
-  const handleSupportSubmitted = (requestId: string) => {
-    setSupportRequestId(requestId);
-    setCurrentStep('complete');
-  };
-
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 'discord-oauth':
-        return (
-          <div className='form-content'>
-            <div className='form-header'>
-              <h3 className='form-title'>Connect Your Discord</h3>
-              <p className='form-subtitle'>Sign in with Discord to verify your membership in the Infima Games server</p>
-            </div>
-            
-            <div className='action-section'>
-              <DiscordOAuthButton />
-            </div>
-            
-            <div className='form-footer'>
-              <p className='privacy-note'>
-                <span className='privacy-icon'>🔒</span>
-                We'll check if you have the "Verified" role in our Discord server
-              </p>
-            </div>
-          </div>
-        );
-
-      case 'github-oauth':
-        return (
-          <div className='form-content'>
-            <div className='form-header'>
-              <h3 className='form-title'>Connect GitHub</h3>
-              <p className='form-subtitle'>
-                Welcome, <strong>{verifiedDiscordUsername}</strong>! Connect your GitHub account to get repository access.
-              </p>
-            </div>
-
-            {message && (
-              <div className='status-message'>
-                <p className={`message ${message.startsWith('Error') ? 'error' : 'success'}`}>
-                  {message}
-                </p>
-              </div>
-            )}
-
-            <div className='action-section'>
-              <div className='github-btn-container'>
-                <button className='github-btn' onClick={handleLogin} title='Connect your GitHub account securely'>
-                  <div className='github-icon'>
-                    <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='currentColor'>
-                      <path d='M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z' />
-                    </svg>
-                  </div>
-                  <span>Connect GitHub Account</span>
-                </button>
-              </div>
-            </div>
-
-            <div className='form-footer'>
-              <button onClick={handleBackToDiscord} className='back-link' title='Go back to Discord connection'>
-                ← Back to Discord connection
-              </button>
-            </div>
-          </div>
-        );
-
-      case 'support-request':
-        return (
-          <div className='form-content'>
-            <div className='form-header'>
-              <h3 className='form-title'>Discord Verification Issue</h3>
-              <p className='form-subtitle'>We couldn't verify your Discord account</p>
-            </div>
-            
-            <DiscordErrorDisplay 
-              error={discordError || 'unknown'}
-              username={discordUsername}
-              userRoles={userRoles}
-            />
-            
-            <div className='form-header'>
-              <h3 className='form-title'>Request Support</h3>
-              <p className='form-subtitle'>Having trouble? We're here to help</p>
-            </div>
-            
-            <SupportRequestForm
-              discordUsername={discordUsername || ''}
-              verificationError={discordError || 'Discord verification failed'}
-              onSupportSubmitted={handleSupportSubmitted}
-              onBack={handleBackToDiscord}
-            />
-          </div>
-        );
-
-      case 'complete':
-        if (supportRequestId) {
-          // Support request completed
-          return (
-            <div className='form-content'>
-              <div className='form-header'>
-                <h3 className='form-title'>Support Request Submitted</h3>
-                <p className='form-subtitle'>We've received your request</p>
-              </div>
-
-              <div className='success-content'>
-                <div className='success-icon'>📧</div>
-                <p className='success-text'>
-                  Your support request has been submitted successfully. Request ID: <strong>{supportRequestId}</strong>
-                </p>
-                <p className='success-text'>
-                  We'll review your request and get back to you soon.
-                </p>
-              </div>
-
-              <div className='form-footer'>
-                <button onClick={handleBackToDiscord} className='back-link' title='Start over'>
-                  ← Start over
-                </button>
-              </div>
-            </div>
-          );
-        } else {
-          // GitHub OAuth completed
-          return (
-            <div className='form-content'>
-              <div className='form-header'>
-                <h3 className='form-title'>Welcome to Insiders!</h3>
-                <p className='form-subtitle'>You're all set up</p>
-              </div>
-
-              <div className='success-content'>
-                <div className='success-icon'>🎉</div>
-                <p className='success-text'>
-                  Congratulations! You now have access to the Insiders repository.
-                </p>
-                <p className='success-text'>
-                  Check your GitHub notifications for the invitation link.
-                </p>
-              </div>
-            </div>
-          );
-        }
-
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className='app-container'>
-      <div className='info-section'>
-        <div className='logo-container'>
-          <img src='/infima-games-logo.svg' alt='Infima Games Logo' className='logo' />
-        </div>
-        <h2 className='title'>Join the Insiders Build: Get Updates Before the Marketplace</h2>
-        <p className='subtitle'>
-          The Realistic Assault Rifle Template has always been about more than some animations and a pretty 3D model. It's about giving you a solid, extensible foundation for shooter mechanics so you can build prototypes faster and focus on what matters: your game.
-        </p>
-        <ul className='benefits'>
-          <li>
-            <span className='check-mark'>✔</span> 
-            <p><strong>Access to the Insider GitHub: </strong>
-              Get the latest build of the template as it's being updated, before it hits the Marketplace.</p>
-          </li>
-          <li>
-            <span className='check-mark'>✔</span> 
-            <p><strong>Transparent Development: </strong>
-              Follow along as we improve the core systems, fix long-standing issues, and expand features.</p>
-          </li>
-          <li>
-            <span className='check-mark'>✔</span> 
-            <p><strong>Direct Contribution to Stability: </strong>
-              By using the Insider build, you help raise the quality bar for everyone.</p>
-          </li>
-        </ul>
-      </div>
-      <div className='signup-section'>
-        <StepIndicator />
-        {renderCurrentStep()}
-        <div className='footer-links'>
-          <p className='no-account'>
-            No account? <a href='https://github.com/signup'>Sign up on GitHub</a>
-          </p>
-        </div>
+    <div className="app-container">
+      <InfoSection />
+
+      <div className="signup-section">
+        <StepIndicator currentStep={currentStep} />
+
+        <SignupFlow
+          currentStep={currentStep}
+          verifiedDiscordUsername={verifiedDiscordUsername}
+          message={message}
+          supportRequestId={supportRequestId}
+          discordError={discordError}
+          discordUsername={discordUsername}
+          userRoles={userRoles}
+          githubConfig={{
+            clientId,
+            redirectUri,
+          }}
+          onGitHubLogin={handleGitHubLogin}
+          onBackToDiscord={goToDiscord}
+          onSupportSubmitted={handleSupportSubmitted}
+        />
+
+        <FooterLinks />
       </div>
     </div>
   );

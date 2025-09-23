@@ -5,6 +5,7 @@
     { "path": "./tsconfig.cloudflare.json" }
   ],
   "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
     "checkJs": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,

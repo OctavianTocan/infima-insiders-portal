@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { Form } from 'react-router';
-import { useDiscord } from './DiscordContext';
 
 interface SupportRequestFormProps {
+  discordUsername?: string;
+  verificationError?: string;
   onSupportSubmitted: (requestId: string) => void;
   onBack: () => void;
 }
 
 const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
+  discordUsername: propDiscordUsername,
+  verificationError: propVerificationError,
   onSupportSubmitted,
   onBack,
 }) => {
-  const { state, actions } = useDiscord();
   const [reason, setReason] = useState('');
-  const isSubmitting = state.isLoading || state.supportRequestStatus === 'submitting';
-  const error = state.error;
-  const discordUsername = state.user?.username || '';
-  const verificationError = state.error || 'Unknown verification error';
+  const isSubmitting = false; // TODO: Add prop or state for submitting
+  const error = null; // TODO: Add prop for error
+  const discordUsername = propDiscordUsername || 'Unknown User';
+  const verificationError = propVerificationError || 'Unknown verification error';
 
   return (
     <div className='input-group'>
@@ -66,7 +68,6 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
             type='submit' 
             className='submit-btn' 
             disabled={isSubmitting || !reason.trim()}
-            onClick={() => actions.startSupportRequest()}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Request'}
           </button>
