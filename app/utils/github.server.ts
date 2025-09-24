@@ -44,6 +44,12 @@ export async function exchangeCodeForToken(
       code,
     }),
   });
+  // We expect a JSON response. We've had cases where GitHub returns HTML (error page)
+  // which causes JSON parsing to fail.
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text();
+    throw new Error(`Token exchange failed: ${tokenResponse.status} - ${errorText}`);
+  }
 
   const tokenData: GitHubTokenResponse = await tokenResponse.json();
   const accessToken = tokenData.access_token;
@@ -65,6 +71,12 @@ export async function fetchGitHubUser(accessToken: string): Promise<string> {
       'Accept': 'application/vnd.github.v3+json',
     },
   });
+
+  // Incorrect user fetch from GitHub API
+  if (!userResponse.ok) {
+    const errorText = await userResponse.text();
+    throw new Error(`Failed to fetch user: ${userResponse.status} - ${errorText}`);
+  }
 
   const userData: GitHubUser = await userResponse.json();
   const username = userData.login;
@@ -103,8 +115,14 @@ export async function addCollaborator(
   } else if (addCollaboratorResponse.status === 422) {
     return { status: 422, invitationStatus: 'pending' };
   } else {
-    const errorData = await addCollaboratorResponse.text();
-    throw new Error(`GitHub API error: ${addCollaboratorResponse.status} - ${errorData}`);
+    // This helps capture error details from GitHub API
+    let errorData;
+    try {
+      errorData = await addCollaboratorResponse.json();
+    } catch {
+      errorData = await addCollaboratorResponse.text();
+    }
+    throw new Error(`GitHub API error: ${addCollaboratorResponse.status} - ${JSON.stringify(errorData)}`);
   }
 }
 
@@ -142,8 +160,13 @@ export async function checkCollaboratorStatus(
         },
       }
     );
-    const invitationsData = await invitationsResponse.json() as { invitee: { login: string } }[];
-    hasPendingInvitation = invitationsData.some((inv) => inv.invitee.login === username);
+    // Prevents errors if invitations fetch fails
+    if (invitationsResponse.ok) {
+      const invitationsData = await invitationsResponse.json() as { invitee: { login: string } }[];
+      hasPendingInvitation = invitationsData.some((inv) => inv.invitee.login === username);
+    } else {
+      console.error('Failed to fetch invitations:', invitationsResponse.status, await invitationsResponse.text());
+    }
   } catch (error) {
     console.error('Error checking invitations:', error);
   }
