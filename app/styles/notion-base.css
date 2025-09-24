@@ -88,6 +88,6 @@
     }
     .app-container {
       padding: var(--spacing-xxl);
-      min-height: auto;
     }
   }
+}
