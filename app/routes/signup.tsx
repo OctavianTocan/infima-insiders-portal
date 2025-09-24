@@ -235,7 +235,7 @@ export default function SignupPage({
           onSupportSubmitted={handleSupportSubmitted}
         />
 
-        <FooterLinks />
+  {currentStep !== 'discord-oauth' && <FooterLinks />}
       </div>
     </div>
   );
