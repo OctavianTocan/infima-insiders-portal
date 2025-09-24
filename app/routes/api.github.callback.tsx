@@ -125,6 +125,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const frontendUrl = env.FRONTEND_URL || url.origin;
     const redirectUrl = new URL('/signup', frontendUrl);
     redirectUrl.searchParams.set('error', 'OAuth process failed');
+    redirectUrl.searchParams.set('error_details', (error as Error).message);
     
     return redirect(redirectUrl.toString());
   }

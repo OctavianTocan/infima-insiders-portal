@@ -53,6 +53,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let message = null;
   if (error) {
     message = `Error: ${error}`;
+    if (errorDetails) {
+      message += ` - ${errorDetails}`;
+    }
   } else if (username) {
     message = isCollaborator
       ? `Welcome, ${username}! You're now a collaborator.`

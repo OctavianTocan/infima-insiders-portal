@@ -53,7 +53,7 @@ export function SignupFlow({
   // Use composition - render the appropriate step component
   switch (currentStep) {
     case 'discord-oauth':
-      return <DiscordOAuthStep />;
+      return <DiscordOAuthStep message={message} />;
 
     case 'github-oauth':
       return (
