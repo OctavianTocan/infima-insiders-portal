@@ -235,7 +235,7 @@ export default function SignupPage({
           onSupportSubmitted={handleSupportSubmitted}
         />
 
-  {currentStep !== 'discord-oauth' && <FooterLinks />}
+        <FooterLinks showGitHubSignup={currentStep !== 'discord-oauth'} />
       </div>
     </div>
   );

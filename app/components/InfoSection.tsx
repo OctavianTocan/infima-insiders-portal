@@ -17,12 +17,12 @@ export function InfoSection() {
       <h2 className="title">
         Join the Insiders Build: Get Updates Before the Marketplace
       </h2>
-      <p className="subtitle">
+      {/* <p className="subtitle">
         The Realistic Assault Rifle Template has always been about more than
         some animations and a pretty 3D model. It's about giving you a solid,
         extensible foundation for shooter mechanics so you can build prototypes
         faster and focus on what matters: your game.
-      </p>
+      </p> */}
       <ul className="benefits">
         <li>
           <span className="check-mark">✔</span>

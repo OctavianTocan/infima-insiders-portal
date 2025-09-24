@@ -12,6 +12,7 @@ import "./app.css";
 import { DiscordProvider } from "./components/DiscordContext";
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/infima-games-logo.svg", type: "image/svg+xml" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",

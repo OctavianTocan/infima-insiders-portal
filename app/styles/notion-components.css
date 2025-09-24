@@ -431,6 +431,25 @@
     }
   }
 
+  .footer-links .legal-links {
+    margin: var(--spacing-sm) 0 0 0;
+    font-size: var(--font-size-secondary);
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  .footer-links .legal-links a {
+    color: var(--color-muted);
+    font-weight: var(--font-weight-normal);
+    text-decoration: underline;
+    transition: var(--transition-fast);
+
+    &:hover {
+      color: var(--color-focus);
+      text-decoration: underline;
+    }
+  }
+
   /* Support elements styles */
   .support-section {
     margin-top: var(--spacing-lg);
