@@ -19,6 +19,13 @@
     height: 50%;
     width: 50%;
     margin-right: var(--spacing-md);
+    filter: invert(1) drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .logo {
+      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+    }
   }
 
   .company-name {
