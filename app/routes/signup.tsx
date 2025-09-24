@@ -57,14 +57,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       message += ` - ${errorDetails}`;
     }
   } else if (username) {
-    message = isCollaborator
-      ? `Welcome, ${username}! You're now a collaborator.`
-      : hasPendingInvitation
-        ? `${username}, you have a pending invitation. Check your GitHub notifications.`
-        : `${username} could not be added. Status: ${status}`;
-  }
-  
-  return {
+    if (isCollaborator) {
+      if (status === 'The user is already a collaborator') {
+        message = `Welcome back, ${username}! You're already a collaborator on the repository.`;
+      } else {
+        message = `Welcome, ${username}! You're now a collaborator on the repository.`;
+      }
+    } else if (hasPendingInvitation) {
+      message = `${username}, you have a pending invitation. Check your GitHub notifications.`;
+    } else {
+      message = `${username} could not be added. Status: ${status}`;
+    }
+  }  return {
     clientId: env.GITHUB_CLIENT_ID,
     backendBase: url.origin,
     redirectUri: `${url.origin}/api/github/callback`,
