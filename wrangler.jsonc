@@ -13,16 +13,6 @@
     "binding": "ASSETS",
   },
   "vars": {
-    "DISCORD_CLIENT_ID": "",
-	"DISCORD_REDIRECT_URI": "",
-	"GITHUB_REPO_NAME": "",
-	"GITHUB_REPO_OWNER": "",
-	"GITHUB_PAT": "",
-	"GITHUB_CLIENT_SECRET": "",
-	"GITHUB_CLIENT_ID": "",
-	"DISCORD_BOT_TOKEN": "",
-	"DISCORD_GUILD_ID": "",
-	"DISCORD_VERIFIED_ROLE_ID": "",
   },
   "observability": {
     "enabled": true,
