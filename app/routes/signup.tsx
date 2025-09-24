@@ -1,6 +1,4 @@
-import React from 'react';
 import type { Route } from './+types/signup';
-import { redirect } from 'react-router';
 
 // Import signup flow components
 import { StepIndicator, InfoSection, FooterLinks, SignupFlow } from '../components';

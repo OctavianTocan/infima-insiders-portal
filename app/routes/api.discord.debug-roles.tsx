@@ -1,4 +1,6 @@
 import type { Route } from './+types/api.discord.debug-roles';
+import type { MemberData, GuildRole } from '../types/discord';
+import { isMemberData, isGuildRoleArray } from '../types/discord';
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = context.cloudflare.env;
@@ -29,9 +31,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
-    const memberData = await memberResponse.json();
-    
+
+
+    const memberRaw = await memberResponse.json();
+    if (!isMemberData(memberRaw)) {
+      return new Response(JSON.stringify({ error: 'Invalid member data from Discord API' }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const memberData: MemberData = memberRaw;
+
     // Get guild roles to resolve names
     const rolesResponse = await fetch(
       `https://discord.com/api/v10/guilds/${env.DISCORD_GUILD_ID}/roles`,
@@ -42,8 +52,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       }
     );
     
-    const allRoles = await rolesResponse.json();
-    const roleMap = Object.fromEntries(allRoles.map((role: any) => [role.id, role.name]));
+
+    const rolesRaw = await rolesResponse.json();
+    if (!isGuildRoleArray(rolesRaw)) {
+      return new Response(JSON.stringify({ error: 'Invalid roles data from Discord API' }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const allRoles: GuildRole[] = rolesRaw;
+    const roleMap = Object.fromEntries(allRoles.map((role) => [role.id, role.name]));
     
     const userRoleNames = memberData.roles.map((roleId: string) => ({
       id: roleId,
