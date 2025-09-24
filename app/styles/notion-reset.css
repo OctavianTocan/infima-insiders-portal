@@ -1,0 +1,15 @@
+/* ===== Notion Reset Layer ===== */
+
+@layer reset {
+  /* Global base styles */
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    box-sizing: border-box;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}

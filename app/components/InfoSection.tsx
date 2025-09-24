@@ -9,7 +9,7 @@ export function InfoSection() {
     <div className="info-section">
       <div className="logo-container">
         <img
-          src="/infima-games-logo.svg"
+          src="../../public/infima-games-logo.svg"
           alt="Infima Games Logo"
           className="logo"
         />

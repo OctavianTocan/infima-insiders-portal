@@ -1,0 +1,9 @@
+/* ===== Notion-Inspired Styles ===== */
+
+/* Import all CSS layers */
+@import './notion-reset.css';
+@import './notion-base.css';
+@import './notion-components.css';
+@import './notion-utilities.css';
+
+/* This file serves as the main entry point for all Notion-inspired styles */

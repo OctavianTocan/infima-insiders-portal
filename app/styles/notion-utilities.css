@@ -1,0 +1,95 @@
+/* ===== Notion Utilities Layer ===== */
+
+@layer utilities {
+  /* Mobile responsive styles */
+  @media (max-width: 768px) {
+    .app-container {
+      padding: var(--spacing-md);
+      flex-direction: column;
+    }
+
+    .info-section {
+      margin-right: 0;
+      margin-bottom: var(--spacing-xxl);
+      max-width: 100%;
+    }
+
+    .signup-section {
+      max-width: 100%;
+    }
+
+    .form-content {
+      padding: var(--spacing-lg);
+    }
+
+    .form-title {
+      font-size: 1.25rem;
+    }
+
+    .title {
+      font-size: 1.5rem;
+    }
+
+    .step-dots {
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+    }
+
+    .step-dot {
+      width: 36px;
+      height: 36px;
+      font-size: var(--font-size-secondary);
+    }
+
+    .step-dot:not(:last-child)::after {
+      right: -20px;
+      width: 16px;
+    }
+
+    .footer-links {
+      padding: var(--spacing-md) var(--spacing-lg);
+    }
+  }
+
+  /* Extra small mobile styles */
+  @media (max-width: 480px) {
+    .app-container {
+      padding: var(--spacing-sm);
+    }
+
+    .logo-container {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .logo {
+      height: 40px;
+      width: 40px;
+      margin-right: var(--spacing-sm);
+    }
+
+    .company-name {
+      font-size: var(--font-size-label);
+    }
+
+    .title {
+      font-size: 1.25rem;
+    }
+
+    .form-content {
+      padding: var(--spacing-md);
+    }
+
+    .form-title {
+      font-size: 1.125rem;
+    }
+
+    .benefits li {
+      padding: var(--spacing-sm);
+    }
+
+    .privacy-note {
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+  }
+}

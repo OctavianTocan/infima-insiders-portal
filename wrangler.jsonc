@@ -4,8 +4,8 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "icy-heart-8709",
-  "compatibility_date": "2025-04-04",
+  "name": "infima-games-insiders-worker",
+  "compatibility_date": "2025-09-13",
   "main": "./workers/app.ts",
   "workers_dev": false,
   "assets": {
