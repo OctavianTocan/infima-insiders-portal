@@ -103,9 +103,17 @@
     transition: var(--transition-fast);
   }
 
+  .signup-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+
   .signup-section:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    transform: translateY(-2px);
+    /* transform: translateY(-2px); */
   }
 
   /* Step indicator styles */
@@ -183,6 +191,38 @@
     color: var(--color-secondary);
     margin: 0;
     line-height: 1.5;
+  }
+
+  .mascot-container {
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 200px;
+    pointer-events: none;
+  }
+
+  .mascot {
+    width: 300px;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    /* Moves it down to match the top of the panel. */
+    transform: translateY(110px);
+  }
+
+  @media (max-width: 768px) {
+    .mascot {
+      width: 120px;
+      /* Solved. */
+      transform: translateY(45px);
+    }
+    .mascot-container {
+      height: 120px;
+      top: -120px;
+    }
   }
 
   /* Form elements */

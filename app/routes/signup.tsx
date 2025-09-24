@@ -214,28 +214,34 @@ export default function SignupPage({
     <div className="app-container">
       <InfoSection />
 
-      <div className="signup-section">
-        <StepIndicator currentStep={currentStep} />
+      <div className="signup-wrapper">
+        <div className='mascot-container'>
+          <img src="/mascot.svg" alt="Infima Games Mascot" className="mascot" />
+        </div>
 
-        <SignupFlow
-          currentStep={currentStep}
-          verifiedDiscordUsername={verifiedDiscordUsername}
-          message={message}
-          supportRequestId={supportRequestId}
-          discordError={discordError}
-          discordUsername={discordUsername}
-          userRoles={userRoles}
-          errorDetails={errorDetails}
-          githubConfig={{
-            clientId,
-            redirectUri,
-          }}
-          onGitHubLogin={handleGitHubLogin}
-          onBackToDiscord={goToDiscord}
-          onSupportSubmitted={handleSupportSubmitted}
-        />
+        <div className="signup-section">
+          <StepIndicator currentStep={currentStep} />
 
-        <FooterLinks showGitHubSignup={currentStep !== 'discord-oauth'} />
+          <SignupFlow
+            currentStep={currentStep}
+            verifiedDiscordUsername={verifiedDiscordUsername}
+            message={message}
+            supportRequestId={supportRequestId}
+            discordError={discordError}
+            discordUsername={discordUsername}
+            userRoles={userRoles}
+            errorDetails={errorDetails}
+            githubConfig={{
+              clientId,
+              redirectUri,
+            }}
+            onGitHubLogin={handleGitHubLogin}
+            onBackToDiscord={goToDiscord}
+            onSupportSubmitted={handleSupportSubmitted}
+          />
+
+          <FooterLinks showGitHubSignup={currentStep !== 'discord-oauth'} />
+        </div>
       </div>
     </div>
   );
