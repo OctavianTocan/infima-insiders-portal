@@ -10,7 +10,7 @@ export { default as DiscordOAuthButton } from './DiscordOAuthButton';
 export { default as DiscordErrorDisplay } from './DiscordErrorDisplay';
 export { default as DiscordVerificationForm } from './DiscordVerificationForm';
 export { default as SupportRequestForm } from './SupportRequestForm';
-export { default as DiscordOAuthStep } from './DiscordOAuthStep';
+export { default as DiscordOAuthStep, DiscordOAuthStepWithMessage } from './DiscordOAuthStep';
 export { default as GitHubOAuthStep } from './GitHubOAuthStep';
 export { default as SupportRequestStep } from './SupportRequestStep';
 export { default as CompleteStep } from './CompleteStep';

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FormStep } from '../hooks/useSignupFlow';
-import { DiscordOAuthStep, GitHubOAuthStep, SupportRequestStep, CompleteStep } from './index';
+import { DiscordOAuthStep, DiscordOAuthStepWithMessage, GitHubOAuthStep, SupportRequestStep, CompleteStep } from './index';
 
 interface SignupFlowProps {
   /** Current step in the signup flow */
@@ -53,7 +53,7 @@ export function SignupFlow({
   // Use composition - render the appropriate step component
   switch (currentStep) {
     case 'discord-oauth':
-      return <DiscordOAuthStep message={message} />;
+      return message ? <DiscordOAuthStepWithMessage message={message} /> : <DiscordOAuthStep />;
 
     case 'github-oauth':
       return (
