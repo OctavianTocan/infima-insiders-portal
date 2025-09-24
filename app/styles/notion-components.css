@@ -523,3 +523,23 @@
     margin-bottom: var(--spacing-md);
   }
 }
+
+/* Error boundary styles */
+.error-boundary {
+  padding-top: 4rem;
+  padding: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.error-boundary pre {
+  width: 100%;
+  padding: 1rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: monospace;
+  font-size: var(--font-size-secondary);
+}

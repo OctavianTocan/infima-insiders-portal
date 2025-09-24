@@ -12,7 +12,7 @@ import "./app.css";
 import { DiscordProvider } from "./components/DiscordContext";
 
 export const links: Route.LinksFunction = () => [
-  { rel: "icon", href: "/infima-games-logo.svg", type: "image/svg+xml" },
+  { rel: "icon", href: "/infima-games-logo-round.svg", type: "image/svg+xml" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -68,11 +68,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
+    <main className="error-boundary">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre>
           <code>{stack}</code>
         </pre>
       )}

@@ -1,7 +1,7 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
-  index("routes/home.tsx"),
+  index("routes/redirect.tsx"),
   route("/signup", "routes/signup.tsx"),
   route("/api/discord/auth", "routes/api.discord.auth.tsx"),
   route("/api/discord/callback", "routes/api.discord.callback.tsx"),
