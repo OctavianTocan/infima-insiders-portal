@@ -17,6 +17,8 @@ interface SignupFlowProps {
   discordUsername: string | null;
   /** User roles from Discord OAuth callback */
   userRoles: Array<{ id: string; name: string }>;
+  /** Error details from OAuth callback */
+  errorDetails: string | null;
   /** GitHub OAuth configuration */
   githubConfig: {
     clientId: string;
@@ -42,6 +44,7 @@ export function SignupFlow({
   discordError,
   discordUsername,
   userRoles,
+  errorDetails,
   githubConfig,
   onGitHubLogin,
   onBackToDiscord,
@@ -68,6 +71,7 @@ export function SignupFlow({
           discordError={discordError}
           discordUsername={discordUsername}
           userRoles={userRoles}
+          errorDetails={errorDetails}
           onSupportSubmitted={onSupportSubmitted}
           onBack={onBackToDiscord}
         />

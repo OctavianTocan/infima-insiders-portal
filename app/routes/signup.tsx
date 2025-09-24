@@ -30,6 +30,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const discordDisplayName = url.searchParams.get('discord_display');
   const discordVerified = url.searchParams.get('discord_verified');
   const userRoles = url.searchParams.get('user_roles');
+  const errorDetails = url.searchParams.get('error_details');
   
   // Extract GitHub OAuth callback parameters
   const username = url.searchParams.get('username');
@@ -73,6 +74,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     discordDisplayName,
     discordVerified: discordVerified === 'true',
     userRoles: parsedUserRoles,
+    errorDetails,
   };
 }
 
@@ -178,7 +180,8 @@ export default function SignupPage({
     redirectUri,
     discordError,
     discordUsername,
-    userRoles
+    userRoles,
+    errorDetails
   } = loaderData;
 
   // Extract signup flow logic into custom hook
@@ -215,6 +218,7 @@ export default function SignupPage({
           discordError={discordError}
           discordUsername={discordUsername}
           userRoles={userRoles}
+          errorDetails={errorDetails}
           githubConfig={{
             clientId,
             redirectUri,

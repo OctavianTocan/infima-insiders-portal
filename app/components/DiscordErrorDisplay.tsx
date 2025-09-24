@@ -5,6 +5,7 @@ interface DiscordErrorDisplayProps {
   error?: string;
   username?: string | null;
   userRoles?: { id: string; name: string }[];
+  errorDetails?: string | null;
   discordInviteLink?: string;
 }
 
@@ -12,12 +13,14 @@ const DiscordErrorDisplay: React.FC<DiscordErrorDisplayProps> = ({
   error: propError,
   username: propUsername,
   userRoles: propUserRoles,
+  errorDetails: propErrorDetails,
   discordInviteLink = 'https://discord.gg/your-invite-link' // Replace with your actual invite
 }) => {
   const { state } = useDiscord();
   const error = propError || state.error;
   const username = propUsername || state.user?.username;
   const userRoles = propUserRoles || state.user?.roles;
+  const errorDetails = propErrorDetails || null;
 
   if (!error) {
     return null;
@@ -72,6 +75,9 @@ const DiscordErrorDisplay: React.FC<DiscordErrorDisplayProps> = ({
       <div className="error-icon">❌</div>
       <h3 className="error-title">{errorInfo.title}</h3>
       <p className="error-message">{errorInfo.message}</p>
+      {errorDetails && (
+        <p className="error-details">Error details: {errorDetails}</p>
+      )}
       {errorInfo.details && (
         <p className="error-details">{errorInfo.details}</p>
       )}

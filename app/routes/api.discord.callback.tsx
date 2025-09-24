@@ -37,7 +37,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     
   } catch (error) {
     console.error('Discord OAuth error:', error);
-    return redirect('/signup?discord_error=oauth_failed');
+    return redirect('/signup?discord_error=oauth_failed&error_details=' + encodeURIComponent((error as Error).message));
   }
 }
 

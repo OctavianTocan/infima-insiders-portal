@@ -6,6 +6,7 @@ interface SupportRequestStepProps {
   discordError: string | null;
   discordUsername: string | null;
   userRoles: { id: string; name: string }[];
+  errorDetails: string | null;
   onSupportSubmitted: (requestId: string) => void;
   onBack: () => void;
 }
@@ -18,6 +19,7 @@ export default function SupportRequestStep({
   discordError,
   discordUsername,
   userRoles,
+  errorDetails,
   onSupportSubmitted,
   onBack
 }: SupportRequestStepProps) {
@@ -32,6 +34,7 @@ export default function SupportRequestStep({
         error={discordError || 'unknown'}
         username={discordUsername}
         userRoles={userRoles}
+        errorDetails={errorDetails}
       />
 
       <div className='form-header'>
