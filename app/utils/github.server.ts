@@ -13,6 +13,9 @@ interface GitHubEnv {
   GITHUB_REPO_NAME: string;
   WEBHOOK_URL?: string;
   FRONTEND_URL?: string;
+  SLACK_WEBHOOK_URL?: string;
+  SLACK_BOT_TOKEN?: string;
+  ADMIN_SLACK_USER_ID?: string;
 }
 
 interface GitHubTokenResponse {
@@ -218,5 +221,63 @@ export async function sendWebhookNotification(
     console.log('Webhook notification sent successfully');
   } catch (error) {
     console.error('Failed to send webhook notification:', error);
+  }
+}
+
+/**
+ * Sends Slack notification for new signups.
+ */
+export async function sendSlackNotification(
+  env: GitHubEnv,
+  username: string,
+  status: string
+): Promise<void> {
+  if (!env.SLACK_BOT_TOKEN || !env.ADMIN_SLACK_USER_ID) return;
+
+  try {
+    // First, open a DM conversation with the admin user
+    const openResponse = await fetch('https://slack.com/api/conversations.open', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.SLACK_BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        users: env.ADMIN_SLACK_USER_ID,
+      }),
+    });
+
+    const openData = await openResponse.json() as any;
+    if (!openData.ok) {
+      throw new Error(`Failed to open DM: ${openData.error}`);
+    }
+
+    const channelId = openData.channel.id;
+
+    // Now, send the message
+    const message = status === 'new' 
+      ? `🎉 New user joined: ${username} has been invited to the repository!`
+      : `👋 Welcome back: ${username} is already a collaborator.`;
+
+    const postResponse = await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.SLACK_BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        channel: channelId,
+        text: message,
+      }),
+    });
+
+    const postData = await postResponse.json() as any;
+    if (!postData.ok) {
+      throw new Error(`Failed to send message: ${postData.error}`);
+    }
+
+    console.log('Slack DM sent successfully');
+  } catch (error) {
+    console.error('Failed to send Slack DM:', error);
   }
 }

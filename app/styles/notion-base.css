@@ -78,4 +78,16 @@
     justify-content: center;
     padding: var(--spacing-xl);
   }
-}
+
+  /* Mobile adjustments */
+  @media (max-width: 767px) {
+    body {
+      padding-top: 20px;
+      height: auto;
+      min-height: 100vh;
+    }
+    .app-container {
+      padding: var(--spacing-xxl);
+      min-height: auto;
+    }
+  }

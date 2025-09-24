@@ -6,6 +6,7 @@ import {
   addCollaborator,
   checkCollaboratorStatus,
   sendWebhookNotification,
+  sendSlackNotification,
 } from '~/utils/github.server';
 
 // SERVER-SIDE LOADER (handles GitHub OAuth callback - your backend logic)
@@ -83,6 +84,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     
     // Verify collaborator status
     const { isCollaborator, hasPendingInvitation } = await checkCollaboratorStatus(username, env);
+    
+    // Send Slack notification for successful signup
+    if (isCollaborator || hasPendingInvitation) {
+      await sendSlackNotification(env, username, isCollaborator ? 'existing' : 'pending');
+    }
     
     // Send final webhook notification
     await sendWebhookNotification(env, {
