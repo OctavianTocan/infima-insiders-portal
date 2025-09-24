@@ -1,6 +1,9 @@
 /**
  * GitHub OAuth utilities for handling authentication and repository access.
  */
+  
+// User-Agent header as per GitHub API guidelines: https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#user-agent
+const GITHUB_USER_AGENT = 'OctavianTocan';
 
 interface GitHubEnv {
   GITHUB_CLIENT_ID: string;
@@ -69,6 +72,7 @@ export async function fetchGitHubUser(accessToken: string): Promise<string> {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Accept': 'application/vnd.github.v3+json',
+      'User-Agent': GITHUB_USER_AGENT,
     },
   });
 
@@ -103,6 +107,7 @@ export async function addCollaborator(
         'Authorization': `Bearer ${env.GITHUB_PAT}`,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
+        'User-Agent': GITHUB_USER_AGENT,
       },
       body: JSON.stringify({ permission: 'pull' }),
     }
@@ -141,6 +146,7 @@ export async function checkCollaboratorStatus(
         headers: {
           'Authorization': `Bearer ${env.GITHUB_PAT}`,
           'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': GITHUB_USER_AGENT,
         },
       }
     );
@@ -157,6 +163,7 @@ export async function checkCollaboratorStatus(
         headers: {
           'Authorization': `Bearer ${env.GITHUB_PAT}`,
           'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': GITHUB_USER_AGENT,
         },
       }
     );
