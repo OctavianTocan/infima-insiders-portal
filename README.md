@@ -4,11 +4,11 @@
 
 ## Overview
 
-This Cloudflare Worker application streamlines access to an exclusive "insiders" GitHub repository for verified owners of Infima Games' Realistic Assault Rifle Template. Users must have a specific role in the Infima Games Discord server to qualify.
+This Cloudflare Worker grants verified Infima Games Discord members access to an exclusive GitHub "insiders" repository for our Realistic Assault Rifle Template. You need a specific role in the Discord to qualify.
 
-Built as a full-stack app starting from the React Router Cloudflare template, it features separate frontend and backend routes (backend routes prefixed with `/api/`). The app handles Discord OAuth for verification and GitHub OAuth to invite users as collaborators to the organization repository.
+I made this as a portfolio piece and a helpful public resource to show how these integrations work. It's built on the React Router Cloudflare template, with frontend and backend routes (backend prefixed with /api/). It uses Discord OAuth for role verification through a custom bot, and GitHub OAuth to add you as a collaborator to the repo.
 
-Key goals: Secure verification, automated invites, and a clean, Notion-inspired UI.
+The main goals are secure verification, automatic invites, and a simple Notion-like UI.
 
 ## Features
 
@@ -101,11 +101,13 @@ No auto-deploys; manual via Wrangler for control.
 
 ## Behind the Scenes
 
-Started from React Router template, evolved into full-stack with API routes. Initially used Bun for speed and dual staging/production workers, but restarted Sept 23, 2025, for cleaner setup: React composition, lifted state, preview URLs instead.
+This project started from the React Router Cloudflare template and turned into a full-stack app with API routes. Initially, it had a two-worker setup for staging and production (staging is disabled now), using Bun for package management (though not currently), Vite for fast builds, and Wrangler CLI for deployments.
 
-Used GitHub Spec Kit for planning (discarded for fresh start with up-to-date deps). AI assistance: GitHub Copilot, Perplexity's GitHub connector with Grok-4 & GPT-5 for changes. Employed `.instructions.md` files to guide Copilot.
+I restarted the project on September 23, 2025, to make it cleaner: using composition for React components, lifting state up, and opting for preview URLs instead of dual workers. I chose my custom Notion-like CSS over TailwindCSS, which I've been refining across projects.
 
-Frontend obsession: Dragged/improved Notion-like CSS across projects (beat Tailwind urge). Planned mascot but removed for brand fit; code remains. To enable it, uncomment the following block in `app/routes/signup.tsx` (around lines 229-231):
+For planning, I used the GitHub Spec Kit but scrapped it for a fresh start with updated deps. I used AI a lot: GitHub Copilot for code, Perplexity with Grok 4 and GPT-5 for changes, and .instructions.md files to guide Copilot.
+
+I thought about adding a mascot but decided against it for brand reasons, though the code remains. To enable it, uncomment this in app/routes/signup.tsx (lines 229-231):
 
 ```tsx
 <div className='mascot-container'>
@@ -113,9 +115,9 @@ Frontend obsession: Dragged/improved Notion-like CSS across projects (beat Tailw
 </div>
 ```
 
-This adds a mascot image above the signup form.
+It adds a mascot image above the signup form.
 
-Insights: Manual deploys avoid annoyances; custom OAuth keeps deps minimal; AI agents shine with good specs but need oversight.
+Insights: Manual deploys avoid issues, custom OAuth keeps deps low, AI agents work well with good specs but need checking.
 
 ## Contributing
 
