@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * Information section displaying the signup benefits and branding.
@@ -15,7 +15,7 @@ export function InfoSection() {
         />
       </div>
       <h2 className="title">
-        Join the Insiders Build: Get Updates Before the Marketplace
+        Join the Insiders Build for the Realistic Assault Rifle Template
       </h2>
       {/* <p className="subtitle">
         The Realistic Assault Rifle Template has always been about more than

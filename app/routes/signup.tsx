@@ -1,10 +1,15 @@
-import type { Route } from './+types/signup';
+import type { Route } from "./+types/signup";
 
 // Import signup flow components
-import { StepIndicator, InfoSection, FooterLinks, SignupFlow } from '../components';
+import {
+  StepIndicator,
+  InfoSection,
+  FooterLinks,
+  SignupFlow,
+} from "../components";
 
 // Import custom hook for signup flow logic
-import { useSignupFlow } from '../hooks/useSignupFlow';
+import { useSignupFlow } from "../hooks/useSignupFlow";
 
 /**
  * Server-side loader for the signup route.
@@ -21,24 +26,25 @@ import { useSignupFlow } from '../hooks/useSignupFlow';
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const env = context.cloudflare.env as any; // Cast to any for Cloudflare Workers compatibility
-  
+
   // Extract Discord OAuth callback parameters
-  const discordSuccess = url.searchParams.get('discord_success');
-  const discordError = url.searchParams.get('discord_error');
-  const discordUsername = url.searchParams.get('discord_username');
-  const discordId = url.searchParams.get('discord_id');
-  const discordDisplayName = url.searchParams.get('discord_display');
-  const discordVerified = url.searchParams.get('discord_verified');
-  const userRoles = url.searchParams.get('user_roles');
-  const errorDetails = url.searchParams.get('error_details');
-  
+  const discordSuccess = url.searchParams.get("discord_success");
+  const discordError = url.searchParams.get("discord_error");
+  const discordUsername = url.searchParams.get("discord_username");
+  const discordId = url.searchParams.get("discord_id");
+  const discordDisplayName = url.searchParams.get("discord_display");
+  const discordVerified = url.searchParams.get("discord_verified");
+  const userRoles = url.searchParams.get("user_roles");
+  const errorDetails = url.searchParams.get("error_details");
+
   // Extract GitHub OAuth callback parameters
-  const username = url.searchParams.get('username');
-  const status = url.searchParams.get('status');
-  const isCollaborator = url.searchParams.get('isCollaborator') === 'true';
-  const hasPendingInvitation = url.searchParams.get('hasPendingInvitation') === 'true';
-  const error = url.searchParams.get('error');
-  
+  const username = url.searchParams.get("username");
+  const status = url.searchParams.get("status");
+  const isCollaborator = url.searchParams.get("isCollaborator") === "true";
+  const hasPendingInvitation =
+    url.searchParams.get("hasPendingInvitation") === "true";
+  const error = url.searchParams.get("error");
+
   // Parse user roles from JSON string if present
   let parsedUserRoles: { id: string; name: string }[] = [];
   try {
@@ -46,9 +52,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       parsedUserRoles = JSON.parse(decodeURIComponent(userRoles));
     }
   } catch (parseError) {
-    console.error('Error parsing user roles from URL parameter:', parseError);
+    console.error("Error parsing user roles from URL parameter:", parseError);
   }
-  
+
   // Generate status message based on OAuth results
   let message = null;
   if (error) {
@@ -58,7 +64,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
   } else if (username) {
     if (isCollaborator) {
-      if (status === 'The user is already a collaborator') {
+      if (status === "The user is already a collaborator") {
         message = `Welcome back, ${username}! You're already a collaborator on the repository.`;
       } else {
         message = `Welcome, ${username}! You're now a collaborator on the repository.`;
@@ -68,23 +74,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     } else {
       message = `${username} could not be added. Status: ${status}`;
     }
-  }  return {
+  }
+  return {
     clientId: env.GITHUB_CLIENT_ID,
     backendBase: url.origin,
     redirectUri: `${url.origin}/api/github/callback`,
     message,
     // Discord OAuth results
-    discordSuccess: discordSuccess === 'true',
+    discordSuccess: discordSuccess === "true",
     discordError,
     discordUsername,
     discordId,
     discordDisplayName,
-    discordVerified: discordVerified === 'true',
+    discordVerified: discordVerified === "true",
     userRoles: parsedUserRoles,
     errorDetails,
   };
 }
-
 
 /**
  * Server-side action for handling support requests.
@@ -100,28 +106,28 @@ export async function loader({ request, context }: Route.LoaderArgs) {
  */
 export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
-  const actionType = formData.get('actionType') as string;
+  const actionType = formData.get("actionType") as string;
   const env = context.cloudflare.env as any; // Cast to any for Cloudflare Workers compatibility
-  
+
   // Handle support request submission
-  if (actionType === 'support-request') {
+  if (actionType === "support-request") {
     const supportData = {
-      discordUsername: formData.get('discordUsername') as string,
-      message: formData.get('message') as string,
-      discordId: formData.get('discordId') as string,
-      verificationError: formData.get('verificationError') as string,
+      discordUsername: formData.get("discordUsername") as string,
+      message: formData.get("message") as string,
+      discordId: formData.get("discordId") as string,
+      verificationError: formData.get("verificationError") as string,
     };
-    
+
     try {
       const requestId = await createSupportRequest(supportData, env);
       return { success: true, requestId };
     } catch (submissionError) {
-      console.error('Support request submission failed:', submissionError);
+      console.error("Support request submission failed:", submissionError);
       return { success: false, error: (submissionError as Error).message };
     }
   }
-  
-  return { success: false, error: 'Unknown action type' };
+
+  return { success: false, error: "Unknown action type" };
 }
 
 /**
@@ -138,15 +144,15 @@ export async function action({ request, context }: Route.ActionArgs) {
  */
 async function createSupportRequest(data: any, env: any): Promise<string> {
   const requestId = crypto.randomUUID();
-  
+
   // Send webhook notification for support tracking (if configured)
   if (env.WEBHOOK_URL) {
     try {
       await fetch(env.WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          event: 'discord_support_request',
+          event: "discord_support_request",
           requestId,
           timestamp: new Date().toISOString(),
           data: {
@@ -154,16 +160,21 @@ async function createSupportRequest(data: any, env: any): Promise<string> {
             discordId: data.discordId,
             message: data.message,
             verificationError: data.verificationError,
-          }
-        })
+          },
+        }),
       });
-      console.log(`Support request ${requestId} notification sent successfully`);
+      console.log(
+        `Support request ${requestId} notification sent successfully`
+      );
     } catch (webhookError) {
-      console.error('Failed to send support request webhook notification:', webhookError);
+      console.error(
+        "Failed to send support request webhook notification:",
+        webhookError
+      );
       // Don't throw - webhook failure shouldn't block support request creation
     }
   }
-  
+
   return requestId;
 }
 
@@ -180,7 +191,7 @@ async function createSupportRequest(data: any, env: any): Promise<string> {
  */
 export default function SignupPage({
   loaderData,
-  actionData
+  actionData,
 }: Route.ComponentProps) {
   const {
     clientId,
@@ -188,7 +199,7 @@ export default function SignupPage({
     discordError,
     discordUsername,
     userRoles,
-    errorDetails
+    errorDetails,
   } = loaderData;
 
   // Extract signup flow logic into custom hook
@@ -215,9 +226,9 @@ export default function SignupPage({
       <InfoSection />
 
       <div className="signup-wrapper">
-        <div className='mascot-container'>
+        {/* <div className='mascot-container'>
           <img src="/mascot.svg" alt="Infima Games Mascot" className="mascot" />
-        </div>
+        </div> */}
 
         <div className="signup-section">
           <StepIndicator currentStep={currentStep} />
@@ -240,7 +251,7 @@ export default function SignupPage({
             onSupportSubmitted={handleSupportSubmitted}
           />
 
-          <FooterLinks showGitHubSignup={currentStep !== 'discord-oauth'} />
+          <FooterLinks showGitHubSignup={currentStep !== "discord-oauth"} />
         </div>
       </div>
     </div>
