@@ -1,15 +1,26 @@
-import type { Route } from "./+types/signup";
+// --- SIGNUP ROUTE --- //
+/**
+ * Multi-step OAuth signup flow route
+ *
+ * This route handles the complete Discord + GitHub OAuth flow with proper
+ * error handling, Slack notifications, and support request functionality.
+ *
+ * @module SignupRoute
+ */
 
-// Import signup flow components
+import type { Route } from "./+types/signup";
 import {
   StepIndicator,
   InfoSection,
   FooterLinks,
   SignupFlow,
+  ConsolidatedErrorDisplay,
 } from "../components";
-
-// Import custom hook for signup flow logic
 import { useSignupFlow } from "../hooks/useSignupFlow";
+import {
+  sendSlackWebhook,
+  createSupportRequestPayload,
+} from "../utils/slack-webhook.server";
 
 /**
  * Server-side loader for the signup route.
@@ -131,21 +142,70 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 /**
- * Creates a support request for Discord verification issues.
- * Generates a unique request ID and sends webhook notification if configured.
+ * Creates and processes a support request with Slack notification
  *
- * This function handles the backend processing of support requests,
- * ensuring proper logging and external notifications for follow-up.
+ * Generates a unique request ID, sends formatted notification to Slack,
+ * and handles webhook failures gracefully without blocking the request.
  *
- * @param data - Support request data containing user information and error details
+ * @param supportData - Support request information
  * @param env - Environment variables for webhook configuration
- * @returns Unique request ID for tracking the support case
- * @throws Error if webhook notification fails (non-blocking)
+ * @returns Promise resolving to unique request ID
+ *
+ * @example
+ * ```typescript
+ * const requestId = await createSupportRequest({
+ *   discordUsername: 'john_doe',
+ *   discordId: '123456789',
+ *   message: 'Cannot verify Discord membership',
+ *   verificationError: 'DISCORD_NOT_MEMBER'
+ * }, env);
+ * ```
  */
-async function createSupportRequest(data: any, env: any): Promise<string> {
+async function createSupportRequest(
+  supportData: {
+    discordUsername: string;
+    discordId?: string;
+    message: string;
+    verificationError?: string;
+  },
+  env: any
+): Promise<string> {
+  // WHY: Generate unique ID for tracking support requests
   const requestId = crypto.randomUUID();
+  const timestamp = new Date();
 
-  // Send webhook notification for support tracking (if configured)
+  // WHY: Send Slack notification with comprehensive support request details
+  if (env.SLACK_WEBHOOK_URL) {
+    try {
+      const slackPayload = createSupportRequestPayload({
+        requestId,
+        username: supportData.discordUsername,
+        discordId: supportData.discordId,
+        message: supportData.message,
+        errorType: supportData.verificationError || "GENERAL_SUPPORT",
+        timestamp,
+      });
+
+      await sendSlackWebhook(env.SLACK_WEBHOOK_URL, slackPayload);
+
+      console.log(
+        `Support request ${requestId} notification sent to Slack successfully`
+      );
+    } catch (webhookError) {
+      // WHY: Log webhook failures but don't block support request creation
+      console.error(
+        "Failed to send support request Slack notification:",
+        webhookError instanceof Error ? webhookError.message : "Unknown error"
+      );
+      // Don't throw - webhook failure shouldn't prevent support request creation
+    }
+  } else {
+    console.warn(
+      "No Slack webhook URL configured - support request notification not sent"
+    );
+  }
+
+  // WHY: Send legacy webhook for backward compatibility (if configured)
   if (env.WEBHOOK_URL) {
     try {
       await fetch(env.WEBHOOK_URL, {
@@ -154,24 +214,26 @@ async function createSupportRequest(data: any, env: any): Promise<string> {
         body: JSON.stringify({
           event: "discord_support_request",
           requestId,
-          timestamp: new Date().toISOString(),
+          timestamp: timestamp.toISOString(),
           data: {
-            discordUsername: data.discordUsername,
-            discordId: data.discordId,
-            message: data.message,
-            verificationError: data.verificationError,
+            discordUsername: supportData.discordUsername,
+            discordId: supportData.discordId,
+            message: supportData.message,
+            verificationError: supportData.verificationError,
           },
         }),
       });
+
       console.log(
-        `Support request ${requestId} notification sent successfully`
+        `Legacy webhook notification sent for support request ${requestId}`
       );
-    } catch (webhookError) {
+    } catch (legacyWebhookError) {
       console.error(
-        "Failed to send support request webhook notification:",
-        webhookError
+        "Failed to send legacy webhook notification:",
+        legacyWebhookError instanceof Error
+          ? legacyWebhookError.message
+          : "Unknown error"
       );
-      // Don't throw - webhook failure shouldn't block support request creation
     }
   }
 
@@ -179,20 +241,19 @@ async function createSupportRequest(data: any, env: any): Promise<string> {
 }
 
 /**
- * SignupPage component implementing a multi-step OAuth flow.
- * Handles Discord verification and GitHub repository access setup.
+ * SignupPage component with consolidated error handling
  *
- * This component follows React composition patterns by breaking down
- * the UI into focused, single-responsibility components and extracting
- * complex state logic into a custom hook.
+ * Implements a clean, multi-step OAuth flow with consolidated error display,
+ * Slack notifications, and modern React patterns. Uses composition over
+ * prop drilling and centralizes all error states.
  *
- * @param loaderData - Data from the server loader (OAuth results, config)
- * @param actionData - Data from server actions (support request results)
+ * @param props - Route component props from React Router
+ * @returns JSX element representing the signup page
  */
 export default function SignupPage({
   loaderData,
   actionData,
-}: Route.ComponentProps) {
+}: Route.ComponentProps): React.ReactElement {
   const {
     clientId,
     redirectUri,
@@ -202,22 +263,33 @@ export default function SignupPage({
     errorDetails,
   } = loaderData;
 
-  // Extract signup flow logic into custom hook
+  // WHY: Extract all signup flow logic into custom hook for clean separation
   const {
     currentStep,
     verifiedDiscordUsername,
     supportRequestId,
     message,
+    error,
+    isLoading,
     goToDiscord,
     handleSupportSubmitted,
+    clearError,
   } = useSignupFlow(loaderData, actionData);
 
   /**
-   * Initiates GitHub OAuth login flow.
-   * Constructs authorization URL and redirects user to GitHub.
+   * Initiates GitHub OAuth login flow
+   *
+   * Constructs the GitHub OAuth URL with proper scopes and redirects
+   * the user to GitHub for authentication.
    */
   const handleGitHubLogin = () => {
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read:user`;
+    const authUrl = [
+      "https://github.com/login/oauth/authorize",
+      `?client_id=${clientId}`,
+      `&redirect_uri=${encodeURIComponent(redirectUri)}`,
+      "&scope=read:user",
+    ].join("");
+
     window.location.href = authUrl;
   };
 
@@ -226,13 +298,32 @@ export default function SignupPage({
       <InfoSection />
 
       <div className="signup-wrapper">
+        {/* Optional mascot display */}
         {/* <div className='mascot-container'>
           <img src="/mascot.svg" alt="Infima Games Mascot" className="mascot" />
         </div> */}
 
         <div className="signup-section">
-          <StepIndicator currentStep={currentStep} />
+          {/* WHY: Only show step indicator for main flow steps */}
+          {(currentStep === "discord-oauth" ||
+            currentStep === "github-oauth") && (
+            <StepIndicator currentStep={currentStep} />
+          )}
 
+          {/* WHY: Single error display prevents UI clutter */}
+          {error && (
+            <ConsolidatedErrorDisplay
+              error={error}
+              errorType="auth"
+              onDismiss={clearError}
+              onRetry={
+                currentStep === "discord-oauth" ? goToDiscord : undefined
+              }
+              canRetry={currentStep === "discord-oauth"}
+            />
+          )}
+
+          {/* Main signup flow component */}
           <SignupFlow
             currentStep={currentStep}
             verifiedDiscordUsername={verifiedDiscordUsername}
@@ -242,15 +333,13 @@ export default function SignupPage({
             discordUsername={discordUsername}
             userRoles={userRoles}
             errorDetails={errorDetails}
-            githubConfig={{
-              clientId,
-              redirectUri,
-            }}
+            loading={isLoading}
             onGitHubLogin={handleGitHubLogin}
             onBackToDiscord={goToDiscord}
             onSupportSubmitted={handleSupportSubmitted}
           />
 
+          {/* WHY: Conditionally show GitHub signup link for relevant steps */}
           <FooterLinks showGitHubSignup={currentStep !== "discord-oauth"} />
         </div>
       </div>

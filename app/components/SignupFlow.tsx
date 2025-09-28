@@ -1,14 +1,38 @@
-import React from 'react';
-import type { FormStep } from '../hooks/useSignupFlow';
-import { DiscordOAuthStep, DiscordOAuthStepWithMessage, GitHubOAuthStep, SupportRequestStep, CompleteStep } from './index';
+// --- SIGNUP FLOW COMPONENT --- //
+/**
+ * SignupFlow component that orchestrates the multi-step OAuth authentication process
+ *
+ * This component follows the composition pattern, rendering different step components
+ * based on the current flow state. It acts as a coordinator rather than containing
+ * complex UI logic, which keeps components focused and testable.
+ *
+ * @module SignupFlow
+ */
 
-interface SignupFlowProps {
-  /** Current step in the signup flow */
-  currentStep: FormStep;
+import React from "react";
+import type { ReactElement } from "react";
+import type { StepComponentProps } from "../types/react";
+import {
+  DiscordOAuthStep,
+  DiscordOAuthStepWithMessage,
+  GitHubOAuthStep,
+  SupportRequestStep,
+  CompleteStep,
+} from "./index";
+
+// --- COMPONENT PROPS --- //
+
+/**
+ * Props for the SignupFlow component
+ *
+ * Combines data from OAuth callbacks, user input, and configuration
+ * to drive the multi-step authentication flow.
+ *
+ * @interface SignupFlowProps
+ */
+interface SignupFlowProps extends StepComponentProps {
   /** Username of verified Discord user */
   verifiedDiscordUsername: string;
-  /** Current status message */
-  message: string | null;
   /** ID of submitted support request */
   supportRequestId: string;
   /** Discord error from OAuth callback */
@@ -19,22 +43,42 @@ interface SignupFlowProps {
   userRoles: Array<{ id: string; name: string }>;
   /** Error details from OAuth callback */
   errorDetails: string | null;
-  /** GitHub OAuth configuration */
-  githubConfig: {
-    clientId: string;
-    redirectUri: string;
-  };
   /** Callback when GitHub login is initiated */
   onGitHubLogin: () => void;
   /** Callback when navigating back to Discord step */
   onBackToDiscord: () => void;
   /** Callback when support request is submitted */
   onSupportSubmitted: (requestId: string) => void;
+  /** Loading state for accessibility */
+  loading: boolean;
 }
 
 /**
- * Renders the appropriate step component based on current signup flow state.
- * Uses composition pattern instead of conditional rendering with boolean props.
+ * SignupFlow component that renders the appropriate authentication step
+ *
+ * Uses composition pattern instead of conditional rendering with boolean props,
+ * which makes the component easier to test and reason about. Each step is a
+ * separate component with focused responsibilities.
+ *
+ * The flow progresses through these steps:
+ * 1. Discord OAuth - User connects their Discord account
+ * 2. GitHub OAuth - User connects their GitHub account
+ * 3. Support Request - Fallback for users who can't complete OAuth
+ * 4. Complete - Success state with next steps
+ *
+ * @param props - SignupFlow configuration and callbacks
+ * @returns JSX element for the current step
+ *
+ * @example
+ * ```tsx
+ * <SignupFlow
+ *   currentStep="github-oauth"
+ *   verifiedDiscordUsername="johndoe"
+ *   onGitHubLogin={() => initiateGitHubOAuth()}
+ *   onBackToDiscord={() => resetToDiscordStep()}
+ *   // ... other props
+ * />
+ * ```
  */
 export function SignupFlow({
   currentStep,
@@ -45,28 +89,44 @@ export function SignupFlow({
   discordUsername,
   userRoles,
   errorDetails,
-  githubConfig,
   onGitHubLogin,
   onBackToDiscord,
   onSupportSubmitted,
-}: SignupFlowProps) {
-  // Use composition - render the appropriate step component
-  switch (currentStep) {
-    case 'discord-oauth':
-      return message ? <DiscordOAuthStepWithMessage message={message} /> : <DiscordOAuthStep />;
+  loading = false,
+  className = "",
+  "data-testid": testId = "signup-flow",
+}: SignupFlowProps): ReactElement {
+  const containerClassName = className.trim() ? className : undefined;
+  const resolvedTestId = `${testId}-${currentStep}`;
 
-    case 'github-oauth':
-      return (
+  let renderedStep: ReactElement;
+
+  // WHY: Switch statement provides better performance than multiple if conditions
+  // and makes the component's behavior more predictable and easier to debug
+  switch (currentStep) {
+    case "discord-oauth":
+      // WHY: Conditional rendering based on message presence avoids prop drilling
+      // and keeps components focused on their specific use cases
+      renderedStep = message ? (
+        <DiscordOAuthStepWithMessage message={message} />
+      ) : (
+        <DiscordOAuthStep />
+      );
+      break;
+
+    case "github-oauth":
+      renderedStep = (
         <GitHubOAuthStep
           verifiedDiscordUsername={verifiedDiscordUsername}
-          message={message}
+          message={message ?? null}
           onLogin={onGitHubLogin}
           onBack={onBackToDiscord}
         />
       );
+      break;
 
-    case 'support-request':
-      return (
+    case "support-request":
+      renderedStep = (
         <SupportRequestStep
           discordError={discordError}
           discordUsername={discordUsername}
@@ -76,16 +136,30 @@ export function SignupFlow({
           onBack={onBackToDiscord}
         />
       );
+      break;
 
-    case 'complete':
-      return (
+    case "complete":
+      renderedStep = (
         <CompleteStep
           supportRequestId={supportRequestId}
           onStartOver={onBackToDiscord}
         />
       );
+      break;
 
     default:
-      return <DiscordOAuthStep />;
+      // WHY: Default case ensures component always renders something valid
+      // This prevents blank screens if an invalid step value is passed
+      console.warn(
+        `Unknown signup step: ${currentStep}. Falling back to Discord OAuth.`
+      );
+      renderedStep = <DiscordOAuthStep />;
+      break;
   }
+
+  return (
+    <div className={containerClassName} data-testid={resolvedTestId}>
+      {renderedStep}
+    </div>
+  );
 }

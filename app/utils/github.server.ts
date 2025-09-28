@@ -1,10 +1,51 @@
+// --- GITHUB OAUTH UTILITIES --- //
 /**
  * GitHub OAuth utilities for handling authentication and repository access.
+ *
+ * This module provides functions for:
+ * - OAuth token exchange
+ * - User authentication
+ * - Repository collaboration management
+ * - Webhook and Slack notifications
+ *
+ * @module GitHubServer
  */
-  
-// User-Agent header as per GitHub API guidelines: https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#user-agent
-const GITHUB_USER_AGENT = 'OctavianTocan';
 
+import type { GitHubUsername, AccessToken } from "../types/branded";
+import type { GitHubRepoEndpoint } from "../types/endpoints";
+import {
+  assertExists,
+  assertSuccessfulResponse,
+  assertValidGitHubUsername,
+} from "../types/assertions";
+
+// --- CONSTANTS --- //
+// WHY: Centralize configuration to make changes easier and reduce magic strings
+
+/**
+ * User-Agent header as per GitHub API guidelines
+ * @see https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#user-agent
+ */
+const GITHUB_USER_AGENT = "OctavianTocan";
+
+// --- ENVIRONMENT INTERFACE --- //
+// WHY: Explicit typing of environment variables prevents runtime errors from missing config
+
+/**
+ * Required environment variables for GitHub operations
+ *
+ * @interface GitHubEnv
+ * @property GITHUB_CLIENT_ID - OAuth application client ID
+ * @property GITHUB_CLIENT_SECRET - OAuth application client secret
+ * @property GITHUB_PAT - Personal Access Token for repository operations
+ * @property GITHUB_REPO_OWNER - Repository owner username
+ * @property GITHUB_REPO_NAME - Repository name
+ * @property WEBHOOK_URL - Optional webhook endpoint for notifications
+ * @property FRONTEND_URL - Optional frontend URL for redirects
+ * @property SLACK_WEBHOOK_URL - Optional Slack webhook URL
+ * @property SLACK_BOT_TOKEN - Optional Slack bot token for DMs
+ * @property ADMIN_SLACK_USER_ID - Optional Slack admin user ID for notifications
+ */
 interface GitHubEnv {
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
@@ -38,30 +79,35 @@ export async function exchangeCodeForToken(
   code: string,
   env: GitHubEnv
 ): Promise<string> {
-  const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: env.GITHUB_CLIENT_ID,
-      client_secret: env.GITHUB_CLIENT_SECRET,
-      code,
-    }),
-  });
+  const tokenResponse = await fetch(
+    "https://github.com/login/oauth/access_token",
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        client_id: env.GITHUB_CLIENT_ID,
+        client_secret: env.GITHUB_CLIENT_SECRET,
+        code,
+      }),
+    }
+  );
   // We expect a JSON response. We've had cases where GitHub returns HTML (error page)
   // which causes JSON parsing to fail.
   if (!tokenResponse.ok) {
     const errorText = await tokenResponse.text();
-    throw new Error(`Token exchange failed: ${tokenResponse.status} - ${errorText}`);
+    throw new Error(
+      `Token exchange failed: ${tokenResponse.status} - ${errorText}`
+    );
   }
 
   const tokenData: GitHubTokenResponse = await tokenResponse.json();
   const accessToken = tokenData.access_token;
 
   if (!accessToken) {
-    throw new Error('Failed to obtain access token');
+    throw new Error("Failed to obtain access token");
   }
 
   return accessToken;
@@ -71,25 +117,27 @@ export async function exchangeCodeForToken(
  * Fetches GitHub user information using access token.
  */
 export async function fetchGitHubUser(accessToken: string): Promise<string> {
-  const userResponse = await fetch('https://api.github.com/user', {
+  const userResponse = await fetch("https://api.github.com/user", {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': GITHUB_USER_AGENT,
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": GITHUB_USER_AGENT,
     },
   });
 
   // Incorrect user fetch from GitHub API
   if (!userResponse.ok) {
     const errorText = await userResponse.text();
-    throw new Error(`Failed to fetch user: ${userResponse.status} - ${errorText}`);
+    throw new Error(
+      `Failed to fetch user: ${userResponse.status} - ${errorText}`
+    );
   }
 
   const userData: GitHubUser = await userResponse.json();
   const username = userData.login;
 
   if (!username) {
-    throw new Error('Failed to fetch username from GitHub API');
+    throw new Error("Failed to fetch username from GitHub API");
   }
 
   return username;
@@ -105,23 +153,23 @@ export async function addCollaborator(
   const addCollaboratorResponse = await fetch(
     `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
     {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Authorization': `Bearer ${env.GITHUB_PAT}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        'User-Agent': GITHUB_USER_AGENT,
+        Authorization: `Bearer ${env.GITHUB_PAT}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+        "User-Agent": GITHUB_USER_AGENT,
       },
-      body: JSON.stringify({ permission: 'pull' }),
+      body: JSON.stringify({ permission: "pull" }),
     }
   );
 
   if (addCollaboratorResponse.status === 201) {
-    return { status: 201, invitationStatus: 'new' };
+    return { status: 201, invitationStatus: "new" };
   } else if (addCollaboratorResponse.status === 204) {
-    return { status: 204, invitationStatus: 'existing' };
+    return { status: 204, invitationStatus: "existing" };
   } else if (addCollaboratorResponse.status === 422) {
-    return { status: 422, invitationStatus: 'pending' };
+    return { status: 422, invitationStatus: "pending" };
   } else {
     // This helps capture error details from GitHub API
     let errorData;
@@ -130,7 +178,9 @@ export async function addCollaborator(
     } catch {
       errorData = await addCollaboratorResponse.text();
     }
-    throw new Error(`GitHub API error: ${addCollaboratorResponse.status} - ${JSON.stringify(errorData)}`);
+    throw new Error(
+      `GitHub API error: ${addCollaboratorResponse.status} - ${JSON.stringify(errorData)}`
+    );
   }
 }
 
@@ -147,15 +197,15 @@ export async function checkCollaboratorStatus(
       `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
       {
         headers: {
-          'Authorization': `Bearer ${env.GITHUB_PAT}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': GITHUB_USER_AGENT,
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": GITHUB_USER_AGENT,
         },
       }
     );
     isCollaborator = collaboratorResponse.status === 204;
   } catch (error) {
-    console.error('Error checking collaborator:', error);
+    console.error("Error checking collaborator:", error);
   }
 
   let hasPendingInvitation = false;
@@ -164,21 +214,31 @@ export async function checkCollaboratorStatus(
       `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/invitations`,
       {
         headers: {
-          'Authorization': `Bearer ${env.GITHUB_PAT}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': GITHUB_USER_AGENT,
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": GITHUB_USER_AGENT,
         },
       }
     );
     // Prevents errors if invitations fetch fails
     if (invitationsResponse.ok) {
-      const invitationsData = await invitationsResponse.json() as { invitee: { login: string } }[];
-      hasPendingInvitation = invitationsData.some((inv) => inv.invitee.login === username);
+      interface GitHubInvitation {
+        invitee: { login: string };
+      }
+      const invitationsData =
+        (await invitationsResponse.json()) as GitHubInvitation[];
+      hasPendingInvitation = invitationsData.some(
+        (inv) => inv.invitee.login === username
+      );
     } else {
-      console.error('Failed to fetch invitations:', invitationsResponse.status, await invitationsResponse.text());
+      console.error(
+        "Failed to fetch invitations:",
+        invitationsResponse.status,
+        await invitationsResponse.text()
+      );
     }
   } catch (error) {
-    console.error('Error checking invitations:', error);
+    console.error("Error checking invitations:", error);
   }
 
   return { isCollaborator, hasPendingInvitation };
@@ -194,7 +254,7 @@ export async function sendWebhookNotification(
     username: string;
     status: string;
     message: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
   if (!env.WEBHOOK_URL) return;
@@ -211,16 +271,16 @@ export async function sendWebhookNotification(
     };
 
     await fetch(env.WEBHOOK_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
 
-    console.log('Webhook notification sent successfully');
+    console.log("Webhook notification sent successfully");
   } catch (error) {
-    console.error('Failed to send webhook notification:', error);
+    console.error("Failed to send webhook notification:", error);
   }
 }
 
@@ -236,18 +296,26 @@ export async function sendSlackNotification(
 
   try {
     // First, open a DM conversation with the admin user
-    const openResponse = await fetch('https://slack.com/api/conversations.open', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.SLACK_BOT_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        users: env.ADMIN_SLACK_USER_ID,
-      }),
-    });
+    const openResponse = await fetch(
+      "https://slack.com/api/conversations.open",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          users: env.ADMIN_SLACK_USER_ID,
+        }),
+      }
+    );
 
-    const openData = await openResponse.json() as any;
+    interface SlackOpenResponse {
+      ok: boolean;
+      channel: { id: string };
+      error?: string;
+    }
+    const openData = (await openResponse.json()) as SlackOpenResponse;
     if (!openData.ok) {
       throw new Error(`Failed to open DM: ${openData.error}`);
     }
@@ -255,15 +323,16 @@ export async function sendSlackNotification(
     const channelId = openData.channel.id;
 
     // Now, send the message
-    const message = status === 'new' 
-      ? `🎉 New user joined: ${username} has been invited to the repository!`
-      : `👋 Welcome back: ${username} is already a collaborator.`;
+    const message =
+      status === "new"
+        ? `🎉 New user joined: ${username} has been invited to the repository!`
+        : `👋 Welcome back: ${username} is already a collaborator.`;
 
-    const postResponse = await fetch('https://slack.com/api/chat.postMessage', {
-      method: 'POST',
+    const postResponse = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${env.SLACK_BOT_TOKEN}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         channel: channelId,
@@ -271,13 +340,17 @@ export async function sendSlackNotification(
       }),
     });
 
-    const postData = await postResponse.json() as any;
+    interface SlackPostResponse {
+      ok: boolean;
+      error?: string;
+    }
+    const postData = (await postResponse.json()) as SlackPostResponse;
     if (!postData.ok) {
       throw new Error(`Failed to send message: ${postData.error}`);
     }
 
-    console.log('Slack DM sent successfully');
+    console.log("Slack DM sent successfully");
   } catch (error) {
-    console.error('Failed to send Slack DM:', error);
+    console.error("Failed to send Slack DM:", error);
   }
 }
