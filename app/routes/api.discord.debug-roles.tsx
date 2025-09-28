@@ -1,9 +1,11 @@
 import type { Route } from './+types/api.discord.debug-roles';
 import type { MemberData, GuildRole } from '../types/discord';
 import { isMemberData, isGuildRoleArray } from '../types/discord';
+import { toDiscordRoleId } from '../types/branded';
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = context.cloudflare.env;
+  const verifiedRoleId = toDiscordRoleId(env.DISCORD_VERIFIED_ROLE_ID);
   const url = new URL(request.url);
   const userId = url.searchParams.get('user_id');
   
@@ -71,8 +73,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return new Response(JSON.stringify({
       user: memberData.user,
       roles: userRoleNames,
-      hasVerifiedRole: memberData.roles.includes(env.DISCORD_VERIFIED_ROLE_ID),
-      verifiedRoleId: env.DISCORD_VERIFIED_ROLE_ID,
+      hasVerifiedRole: memberData.roles.includes(verifiedRoleId),
+      verifiedRoleId,
       guildId: env.DISCORD_GUILD_ID
     }), {
       headers: { 'Content-Type': 'application/json' }

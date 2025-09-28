@@ -1,10 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { reactRouterParameters } from 'storybook-addon-remix-react-router';
 import { SignupFlow } from '../app/components/SignupFlow';
+import { DiscordProvider } from '../app/components/DiscordContext';
 import type { FormStep } from '../app/hooks/useSignupFlow';
 
 const meta: Meta<typeof SignupFlow> = {
   title: 'Components/SignupFlow',
   component: SignupFlow,
+  decorators: [
+    (Story) => (
+      <DiscordProvider>
+        <Story />
+      </DiscordProvider>
+    ),
+  ],
   parameters: {
     layout: 'padded',
     docs: {
@@ -12,6 +21,15 @@ const meta: Meta<typeof SignupFlow> = {
         component: 'SignupFlow component that orchestrates the multi-step OAuth authentication process',
       },
     },
+    reactRouter: reactRouterParameters({
+      routing: {
+        path: '/signup',
+        useStoryElement: true,
+      },
+      location: {
+        path: '/signup',
+      },
+    }),
   },
   tags: ['autodocs'],
   argTypes: {

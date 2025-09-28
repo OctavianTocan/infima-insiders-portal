@@ -11,7 +11,6 @@
 
 import React from "react";
 import type { BaseComponentProps } from "../types/react";
-import type { DiscordUserId } from "../types/branded";
 import { useDiscord } from "./DiscordContext";
 import { ConsolidatedErrorDisplay } from "./ConsolidatedErrorDisplay";
 
@@ -28,6 +27,16 @@ export type DiscordErrorType =
   | "rate_limited"
   | "server_error"
   | "network_error";
+
+const KNOWN_DISCORD_ERRORS: ReadonlySet<DiscordErrorType> = new Set([
+  "not_member",
+  "not_verified",
+  "oauth_failed",
+  "no_code",
+  "rate_limited",
+  "server_error",
+  "network_error",
+]);
 
 /**
  * Discord user role information
@@ -137,8 +146,9 @@ export default function DiscordErrorDisplay({
   if (!error) return null;
 
   // WHY: Get appropriate error configuration based on error type and context
+  const normalizedError = typeof error === "string" ? error : String(error);
   const errorConfig = getDiscordErrorConfig(
-    error as DiscordErrorType,
+    normalizedError,
     username,
     userRoles,
     discordInviteLink
@@ -163,6 +173,7 @@ export default function DiscordErrorDisplay({
       canRetry={errorConfig.canRetry}
       actionText={errorConfig.actionText}
       actionUrl={errorConfig.actionUrl}
+      title={errorConfig.title}
       onDismiss={onDismiss}
       onRetry={onRetry}
       onAction={errorConfig.actionUrl ? handleAction : undefined}
@@ -184,11 +195,32 @@ export default function DiscordErrorDisplay({
  * @returns Error configuration object
  */
 function getDiscordErrorConfig(
-  errorType: DiscordErrorType,
+  errorType: DiscordErrorType | string,
   username?: string | null,
   userRoles?: DiscordRole[],
   inviteLink?: string
 ): ErrorConfig {
+  if (!isKnownDiscordError(errorType)) {
+    const fallbackMessage =
+      typeof errorType === "string" && errorType.trim().length > 0
+        ? errorType
+        : "An unexpected Discord error occurred.";
+
+    return {
+      title: "Discord Verification Issue",
+      message: fallbackMessage,
+      action:
+        "Provide more details below so our team can review your access request.",
+      actionText: "Request Support",
+      severity: "warning",
+      canRetry: false,
+      details:
+        typeof errorType === "string" && errorType.trim().length > 0
+          ? `Discord error: ${errorType}`
+          : undefined,
+    };
+  }
+
   const displayName = username ? `Discord user ${username}` : "You";
 
   switch (errorType) {
@@ -285,4 +317,11 @@ function getDiscordErrorConfig(
         details: `Error type: ${errorType}`,
       };
   }
+}
+
+function isKnownDiscordError(value: unknown): value is DiscordErrorType {
+  return (
+    typeof value === "string" &&
+    KNOWN_DISCORD_ERRORS.has(value as DiscordErrorType)
+  );
 }

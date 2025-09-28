@@ -6,6 +6,8 @@ interface SupportRequestFormProps {
   verificationError?: string;
   onSupportSubmitted: (requestId: string) => void;
   onBack: () => void;
+  submissionError?: string | null;
+  onClearError?: () => void;
 }
 
 const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
@@ -13,10 +15,11 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
   verificationError: propVerificationError,
   onSupportSubmitted,
   onBack,
+  submissionError,
+  onClearError,
 }) => {
   const [reason, setReason] = useState('');
   const isSubmitting = false; // TODO: Add prop or state for submitting
-  const error = null; // TODO: Add prop for error
   const discordUsername = propDiscordUsername || 'Unknown User';
   const verificationError = propVerificationError || 'Unknown verification error';
 
@@ -46,7 +49,12 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
             id='reason'
             name='message'
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => {
+              setReason(e.target.value);
+              if (submissionError) {
+                onClearError?.();
+              }
+            }}
             placeholder='Please explain why you should have access to the repository...'
             className='reason-textarea'
             rows={4}
@@ -58,7 +66,11 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
           </small>
         </div>
 
-        {error && <div className='error-message'>{error}</div>}
+        {submissionError && (
+          <div className='form-error' role='alert'>
+            {submissionError}
+          </div>
+        )}
 
         <div className='button-group'>
           <button type='button' onClick={onBack} className='back-btn' disabled={isSubmitting}>

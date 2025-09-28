@@ -55,6 +55,8 @@ interface ConsolidatedErrorProps extends BaseComponentProps {
   actionText?: string;
   /** Custom action URL for external links */
   actionUrl?: string;
+  /** Optional explicit heading for the error card */
+  title?: string;
   /** Callback to dismiss the error */
   onDismiss?: () => void;
   /** Callback to retry the failed operation */
@@ -106,6 +108,7 @@ export function ConsolidatedErrorDisplay({
   canRetry = false,
   actionText,
   actionUrl,
+  title,
   onDismiss,
   onRetry,
   onAction,
@@ -117,6 +120,7 @@ export function ConsolidatedErrorDisplay({
 
   // WHY: Get configuration based on error type and severity
   const errorConfig = getErrorConfiguration(errorType, severity);
+  const heading = title || errorConfig.title;
   const finalActionText = actionText || (canRetry ? "Try Again" : undefined);
 
   // WHY: Combine CSS classes for flexible styling
@@ -155,7 +159,7 @@ export function ConsolidatedErrorDisplay({
 
         <div className="error-display__text">
           {/* Error title */}
-          <h3 className="error-display__title">{errorConfig.title}</h3>
+          <h3 className="error-display__title">{heading}</h3>
 
           {/* Main error message */}
           <p className="error-display__message">{error}</p>

@@ -1,11 +1,13 @@
-import type { Preview } from '@storybook/react-vite'
+import type { Preview } from '@storybook/react-vite';
+import { withRouter, reactRouterParameters } from 'storybook-addon-remix-react-router';
 
 const preview: Preview = {
+  decorators: [withRouter],
   parameters: {
     controls: {
       matchers: {
-       color: /(background|color)$/i,
-       date: /Date$/i,
+        color: /(background|color)$/i,
+        date: /Date$/i,
       },
     },
 
@@ -13,8 +15,18 @@ const preview: Preview = {
       // 'todo' - show a11y violations in the test UI only
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
-      test: 'todo'
-    }
+      test: 'todo',
+    },
+    reactRouter: reactRouterParameters({
+      // WHY: Provide default route context so Remix Router hooks resolve in stories
+      routing: {
+        path: '/signup',
+        useStoryElement: true,
+      },
+      location: {
+        path: '/signup',
+      },
+    }),
   },
 };
 

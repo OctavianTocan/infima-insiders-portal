@@ -153,20 +153,13 @@ export function useSignupFlow(
   // WHY: Prevent multiple error messages by consolidating all error sources
 
   useEffect(() => {
-    let consolidatedError: string | null = null;
-
-    // Priority order: Discord errors > Action errors > General errors
-    if (discordError) {
-      consolidatedError = discordError;
-      if (errorDetails) {
-        consolidatedError += ` (${errorDetails})`;
-      }
-    } else if (actionData?.error) {
-      consolidatedError = `Support request failed: ${actionData.error}`;
+    if (actionData?.error) {
+      setError(`Support request failed: ${actionData.error}`);
+      return;
     }
 
-    setError(consolidatedError);
-  }, [discordError, errorDetails, actionData?.error]);
+    setError(null);
+  }, [actionData?.error]);
 
   // --- STEP TRANSITIONS --- //
 

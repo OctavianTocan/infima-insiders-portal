@@ -116,56 +116,135 @@
     /* transform: translateY(-2px); */
   }
 
+  .signup-section a,
+  .form-content a {
+    color: var(--color-muted);
+    text-decoration: underline;
+    font-weight: var(--font-weight-medium);
+    transition: var(--transition-fast);
+  }
+
+  .signup-section a:hover,
+  .form-content a:hover {
+    color: var(--color-focus);
+  }
+
   /* Step indicator styles */
-  .step-dots {
+  .step-indicator {
     display: flex;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+    gap: var(--spacing-xl);
+    list-style: none;
+    margin: 0;
     padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-md);
     background: var(--color-input-bg);
     border-bottom: 1px solid var(--color-border);
   }
 
+  .step-indicator--horizontal {
+    flex-direction: row;
+  }
+
+  .step-indicator--vertical {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
   .step-dot {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    --step-dot-size: 40px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+    min-width: 108px;
+    text-align: center;
+    color: var(--color-secondary);
+    font-weight: var(--font-weight-medium);
+    transition: var(--transition-fast);
+  }
+
+  .step-dot--small {
+    --step-dot-size: 32px;
+    min-width: 88px;
+  }
+
+  .step-dot--large {
+    --step-dot-size: 48px;
+    min-width: 128px;
+  }
+
+  .step-dot__number {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: var(--step-dot-size);
+    height: var(--step-dot-size);
+    border-radius: 50%;
     background-color: var(--color-background);
     border: 2px solid var(--color-border);
-    color: var(--color-secondary);
-    font-weight: var(--font-weight-medium);
-    font-size: var(--font-size-label);
-    transition: var(--transition-fast);
-    position: relative;
     box-shadow: var(--shadow-card);
+    font-size: var(--font-size-label);
+    color: inherit;
   }
 
-  .step-dot.active {
+  .step-dot__label {
+    font-size: var(--font-size-secondary);
+    line-height: 1.4;
+    color: inherit;
+    max-width: 160px;
+  }
+
+  .step-dot--active {
+    color: var(--color-primary);
+  }
+
+  .step-dot--active .step-dot__number {
     background-color: var(--color-focus);
     border-color: var(--color-focus);
     color: var(--color-button-text);
-    transform: scale(1.1);
+    transform: scale(1.05);
   }
 
-  .step-dot.completed {
+  .step-dot--completed .step-dot__number {
     background-color: var(--color-success);
     border-color: var(--color-success);
     color: var(--color-button-text);
   }
 
-  .step-dot:not(:last-child)::after {
+  .step-indicator--horizontal .step-dot:not(:last-child)::after {
     content: '';
     position: absolute;
-    right: -25px;
-    top: 50%;
+    top: calc(var(--step-dot-size) / 2);
+    right: calc(-1 * var(--spacing-xl) / 1.5);
     transform: translateY(-50%);
-    width: 20px;
+    width: var(--spacing-xxl);
     height: 2px;
+    background-color: var(--color-border);
+  }
+
+  .step-indicator--vertical .step-dot {
+    align-items: flex-start;
+    text-align: left;
+    min-width: auto;
+  }
+
+  .step-indicator--vertical .step-dot__label {
+    max-width: none;
+  }
+
+  .step-indicator--vertical .step-dot:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--step-dot-size) / 2);
+    bottom: calc(-1 * var(--spacing-xl));
+    transform: translateX(-50%);
+    width: 2px;
+    height: var(--spacing-xxl);
     background-color: var(--color-border);
   }
 
@@ -278,6 +357,16 @@
     font-size: var(--font-size-secondary);
     color: var(--color-muted);
     margin-top: var(--spacing-xs);
+  }
+
+  .form-error {
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: rgba(198, 40, 40, 0.08);
+    border: 1px solid rgba(198, 40, 40, 0.2);
+    color: var(--color-error);
+    font-size: var(--font-size-label);
   }
 
   /* Button styles */
@@ -460,7 +549,7 @@
   }
 
   .footer-links .no-account a {
-    color: var(--color-focus);
+    color: var(--color-muted);
     font-weight: var(--font-weight-semibold);
     text-decoration: none;
     transition: var(--transition-fast);

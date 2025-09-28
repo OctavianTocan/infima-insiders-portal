@@ -9,6 +9,8 @@ interface SupportRequestStepProps {
   errorDetails: string | null;
   onSupportSubmitted: (requestId: string) => void;
   onBack: () => void;
+  supportError?: string | null;
+  onSupportErrorClear?: () => void;
 }
 
 /**
@@ -21,7 +23,9 @@ export default function SupportRequestStep({
   userRoles,
   errorDetails,
   onSupportSubmitted,
-  onBack
+  onBack,
+  supportError,
+  onSupportErrorClear
 }: SupportRequestStepProps) {
   return (
     <div className='form-content'>
@@ -47,6 +51,8 @@ export default function SupportRequestStep({
         verificationError={discordError || 'Discord verification failed'}
         onSupportSubmitted={onSupportSubmitted}
         onBack={onBack}
+        submissionError={supportError}
+        onClearError={onSupportErrorClear}
       />
     </div>
   );
