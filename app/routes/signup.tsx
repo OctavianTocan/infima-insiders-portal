@@ -276,7 +276,8 @@ export default function SignupPage({
     clearError,
   } = useSignupFlow(loaderData, actionData);
   const supportStepError = currentStep === "support-request" ? error : null;
-  const shouldShowGlobalError = Boolean(error) && currentStep !== "support-request";
+  const shouldShowGlobalError =
+    Boolean(error) && currentStep !== "support-request";
 
   /**
    * Initiates GitHub OAuth login flow
@@ -347,4 +348,4 @@ export default function SignupPage({
       </div>
     </div>
   );
- }
+}
