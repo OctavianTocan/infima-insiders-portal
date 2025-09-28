@@ -3,6 +3,7 @@ import {
   withRouter,
   reactRouterParameters,
 } from "storybook-addon-remix-react-router";
+import "../app/app.css";
 
 const preview: Preview = {
   decorators: [withRouter],

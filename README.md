@@ -41,6 +41,7 @@ The main goals are secure verification, automatic invites, and a simple Notion-l
 Copy `.env.example` to `.env` and fill in the values. Here's a detailed list:
 
 **Discord Variables** (Create an app at https://discord.com/developers/applications):
+
 - `DISCORD_CLIENT_ID`: Your Discord app's client ID
 - `DISCORD_CLIENT_SECRET`: Your Discord app's client secret
 - `DISCORD_BOT_TOKEN`: Bot token for API access
@@ -49,6 +50,7 @@ Copy `.env.example` to `.env` and fill in the values. Here's a detailed list:
 - `DISCORD_REDIRECT_URI`: Matches the redirect URI in your Discord app settings
 
 **GitHub Variables** (Create OAuth app at https://github.com/settings/developers):
+
 - `GITHUB_REPO_NAME`: Name of the target repository (e.g., "insiders-repo")
 - `GITHUB_REPO_OWNER`: Username or organization name owning the repo
 - `GITHUB_PAT`: Personal Access Token with "repo" and "read:org" scopes (generate at https://github.com/settings/tokens)
@@ -71,6 +73,28 @@ npm run dev
 ```
 
 Visit `http://localhost:5173/signup`.
+
+### Testing and Storybook
+
+This project uses Storybook for component development and testing. All UI components have dedicated stories showcasing different states and props.
+
+To run Storybook:
+
+```bash
+npm run storybook
+```
+
+Visit `http://localhost:6006` to browse all component stories. Each story represents a specific state of a component, making it easy to test and develop UI in isolation.
+
+Key stories include:
+
+- **Button**: Default, disabled, loading states
+- **SignupFlow**: Complete signup process steps
+- **Discord Components**: OAuth button, verification form, error displays
+- **Support Components**: Request forms and steps
+- **Layout Components**: Info sections, footers, step indicators
+
+Use these stories to verify component behavior, test edge cases, and develop new features without running the full app.
 
 ### Build & Deploy
 
@@ -110,7 +134,7 @@ For planning, I used the GitHub Spec Kit but scrapped it for a fresh start with 
 I thought about adding a mascot but decided against it for brand reasons, though the code remains. To enable it, uncomment this in app/routes/signup.tsx (lines 229-231):
 
 ```tsx
-<div className='mascot-container'>
+<div className="mascot-container">
   <img src="/mascot.svg" alt="Infima Games Mascot" className="mascot" />
 </div>
 ```
