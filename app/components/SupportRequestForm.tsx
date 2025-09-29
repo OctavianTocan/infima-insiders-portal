@@ -27,15 +27,12 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
   return (
     <div className="input-group">
       <div className="error-context">
-        <p className="error-summary">
-          Your Discord username <strong>{discordUsername}</strong> could not be
-          verified.
-        </p>
+        <p className="error-summary">Your Discord could not be verified:</p>
         <p className="error-details">
           <span className="error-text">{verificationError}</span>
         </p>
         <p className="instruction-text">
-          Please provide details about why you should have access.
+          Please provide details us with details about what happened.
         </p>
       </div>
 
@@ -45,7 +42,7 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
 
         <div className="input-group">
           <label htmlFor="reason" className="input-label">
-            Reason for Request
+            Message
           </label>
           <textarea
             id="reason"
@@ -57,14 +54,14 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
                 onClearError?.();
               }
             }}
-            placeholder="Please explain why you should have access to the repository..."
+            placeholder="Explain what happened so we can help you out..."
             className="reason-textarea"
             rows={4}
             disabled={isSubmitting}
             required
           />
           <small className="input-help">
-            Be specific about your involvement with the project or community
+            Be specific about your issue to help us assist you better.
           </small>
         </div>
 

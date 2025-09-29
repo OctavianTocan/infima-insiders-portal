@@ -1,5 +1,5 @@
 import React from "react";
-import DiscordErrorDisplay from "./DiscordErrorDisplay";
+import ErrorMessageDisplay from "./ErrorMessageDisplay";
 import SupportRequestForm from "./SupportRequestForm";
 
 interface SupportRequestStepProps {
@@ -17,6 +17,29 @@ interface SupportRequestStepProps {
  * Component for the support request step in the signup flow.
  * Displays Discord error and support request form.
  */
+// --- HELPER FUNCTIONS --- //
+
+/**
+ * Get user-friendly error message based on Discord error type
+ * WHY: Provides clear, actionable error messages to users
+ */
+function getErrorMessage(error: string, username: string | null): string {
+  const displayName = username ? `Discord user ${username}` : "You";
+
+  switch (error) {
+    case "not_member":
+      return `${displayName} is not a member of the Infima Games Discord server. Please join our server to continue.`;
+    case "not_verified":
+      return `${displayName} needs to complete verification in our Discord server.`;
+    case "oauth_failed":
+      return "Discord authentication failed. Please try again.";
+    case "rate_limited":
+      return "Too many requests to Discord. Please wait a few minutes and try again.";
+    default:
+      return `Discord verification issue: ${error}. Please provide details below for support.`;
+  }
+}
+
 export default function SupportRequestStep({
   discordError,
   discordUsername,
@@ -31,20 +54,20 @@ export default function SupportRequestStep({
     <div className="form-content">
       <div className="form-header">
         <h3 className="form-title">Discord Verification Issue</h3>
-        <p className="form-subtitle">We couldn't verify your Discord account</p>
+        {/* <p className="form-subtitle">We couldn't verify your Discord account</p> */}
       </div>
 
-      <DiscordErrorDisplay
-        error={discordError || "unknown"}
-        username={discordUsername}
-        userRoles={userRoles}
-        errorDetails={errorDetails}
-      />
+      {/* {discordError && (
+        <ErrorMessageDisplay
+          message={getErrorMessage(discordError, discordUsername)}
+          type="error"
+        />
+      )} */}
 
-      <div className="form-header">
+      {/* <div className="form-header">
         <h3 className="form-title">Request Support</h3>
         <p className="form-subtitle">Having trouble? We're here to help</p>
-      </div>
+      </div> */}
 
       <SupportRequestForm
         discordUsername={discordUsername || ""}

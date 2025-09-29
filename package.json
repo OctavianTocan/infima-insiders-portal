@@ -8,7 +8,7 @@
     "typecheck": "npm run cf-typegen && vite typegen && tsc -b",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "dev:staging": "wrangler dev --env staging --local",
+    "dev": "wrangler dev --env staging --local",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
     "deploy:production": "npm run build:production && wrangler deploy",

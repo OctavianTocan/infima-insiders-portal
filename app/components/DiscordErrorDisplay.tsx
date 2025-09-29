@@ -12,7 +12,7 @@
 import React from "react";
 import type { BaseComponentProps } from "../types/react";
 import { useDiscord } from "./DiscordContext";
-import { ConsolidatedErrorDisplay } from "./ConsolidatedErrorDisplay";
+import ErrorMessageDisplay from "./ErrorMessageDisplay";
 
 // --- ERROR TYPES --- //
 
@@ -163,23 +163,27 @@ export default function DiscordErrorDisplay({
     }
   };
 
+  // WHY: Map severity to MessageType
+  const messageType = errorConfig.severity === "info" ? "info" : 
+                     errorConfig.severity === "warning" ? "warning" : "error";
+
   return (
-    <ConsolidatedErrorDisplay
-      error={errorConfig.message}
-      errorDetails={errorDetails || errorConfig.details}
-      errorType="auth"
-      severity={errorConfig.severity}
-      dismissible={dismissible}
-      canRetry={errorConfig.canRetry}
-      actionText={errorConfig.actionText}
-      actionUrl={errorConfig.actionUrl}
-      title={errorConfig.title}
-      onDismiss={onDismiss}
-      onRetry={onRetry}
-      onAction={errorConfig.actionUrl ? handleAction : undefined}
-      className={`discord-error-display ${className}`}
-      data-testid={testId}
-    />
+    <div className={`discord-error-display ${className}`} data-testid={testId}>
+      <ErrorMessageDisplay
+        message={`${errorConfig.title}: ${errorConfig.message}`}
+        type={messageType}
+        dismissible={dismissible}
+        onDismiss={onDismiss}
+        actionText={errorConfig.actionText || (errorConfig.canRetry ? "Try Again" : undefined)}
+        onAction={errorConfig.actionUrl ? handleAction : (errorConfig.canRetry ? onRetry : undefined)}
+      />
+      {errorDetails && (
+        <details className="error-details">
+          <summary>Technical Details</summary>
+          <pre>{errorDetails}</pre>
+        </details>
+      )}
+    </div>
   );
 }
 

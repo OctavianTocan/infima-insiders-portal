@@ -10,11 +10,11 @@
 
 import type { Route } from "./+types/signup";
 import {
+  SignupFlow,
   StepIndicator,
   InfoSection,
   FooterLinks,
-  SignupFlow,
-  ConsolidatedErrorDisplay,
+  ErrorMessageDisplay,
 } from "../components";
 import { useSignupFlow } from "../hooks/useSignupFlow";
 import {
@@ -315,14 +315,13 @@ export default function SignupPage({
 
           {/* WHY: Single error display prevents UI clutter */}
           {shouldShowGlobalError && (
-            <ConsolidatedErrorDisplay
-              error={error}
-              errorType="auth"
+            <ErrorMessageDisplay
+              message={error || "An error occurred"}
+              type="error"
+              dismissible
               onDismiss={clearError}
-              onRetry={
-                currentStep === "discord-oauth" ? goToDiscord : undefined
-              }
-              canRetry={currentStep === "discord-oauth"}
+              actionText={currentStep === "discord-oauth" ? "Try Again" : undefined}
+              onAction={currentStep === "discord-oauth" ? goToDiscord : undefined}
             />
           )}
 

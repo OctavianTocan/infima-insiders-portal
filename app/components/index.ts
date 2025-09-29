@@ -8,9 +8,9 @@ export type { DiscordUser, DiscordState } from "./DiscordContext";
 // Individual components (for advanced usage)
 export { default as DiscordOAuthButton } from "./DiscordOAuthButton";
 export { default as DiscordErrorDisplay } from "./DiscordErrorDisplay";
-export { default as DiscordVerificationForm } from "./DiscordVerificationForm";
 export { default as SupportRequestForm } from "./SupportRequestForm";
 export { ConsolidatedErrorDisplay } from "./ConsolidatedErrorDisplay";
+export { default as ErrorMessageDisplay, ErrorMessage, SuccessMessage, WarningMessage, InfoMessage } from "./ErrorMessageDisplay";
 export {
   default as DiscordOAuthStep,
   DiscordOAuthStepWithMessage,

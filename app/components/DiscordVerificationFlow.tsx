@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { DiscordProvider } from './DiscordContext';
 import DiscordOAuthButton from './DiscordOAuthButton';
-import DiscordVerificationForm from './DiscordVerificationForm';
 import DiscordErrorDisplay from './DiscordErrorDisplay';
 import SupportRequestForm from './SupportRequestForm';
 
-type ViewState = 'oauth' | 'verification' | 'support' | 'success';
+type ViewState = 'oauth' | 'support' | 'success';
 
 /**
  * Discord verification flow wrapper component that demonstrates
@@ -24,28 +23,13 @@ const DiscordVerificationFlow: React.FC = () => {
   };
 
   const handleBack = () => {
-    setCurrentView('verification');
+    setCurrentView('oauth');
   };
 
   const renderCurrentView = () => {
     switch (currentView) {
       case 'oauth':
-        return (
-          <div>
-            <DiscordOAuthButton />
-            <button 
-              onClick={() => setCurrentView('verification')}
-              className="alternative-verification-btn"
-            >
-              Manual Verification
-            </button>
-          </div>
-        );
-      
-      case 'verification':
-        return (
-          <DiscordVerificationForm onSupportRequest={handleSupportRequest} />
-        );
+        return <DiscordOAuthButton />;
       
       case 'support':
         return (

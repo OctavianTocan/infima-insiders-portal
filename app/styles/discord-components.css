@@ -33,7 +33,12 @@
   }
 
   .discord-icon {
+    display: inline-flex;
+    align-items: center;
     margin-right: var(--spacing-sm);
+    vertical-align: middle;
+    height: 24px;
+    line-height: 1;
   }
 
   .discord-oauth-container {

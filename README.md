@@ -96,6 +96,8 @@ Key stories include:
 
 Use these stories to verify component behavior, test edge cases, and develop new features without running the full app.
 
+📖 **[Component States Testing Guide](./COMPONENT_STATES_GUIDE.md)** - Comprehensive guide for activating and testing different component states during development.
+
 ### Build & Deploy
 
 ```bash
