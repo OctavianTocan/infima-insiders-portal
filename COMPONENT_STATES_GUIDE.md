@@ -43,7 +43,8 @@ Visit `http://localhost:5173/signup` and use URL parameters or browser developer
 
 ### 1. Discord OAuth Step (Initial State)
 
-**Default URL:** 
+**Default URL:**
+
 ```
 http://localhost:5173/signup
 ```
@@ -51,11 +52,13 @@ http://localhost:5173/signup
 **Description:** First step where users connect their Discord account.
 
 **How to activate:**
+
 - Navigate to the signup URL
 - Clear all URL parameters
 - This is the default state
 
 **Visual elements:**
+
 - Discord OAuth button
 - Step indicator showing step 1/2
 - Info section explaining the process
@@ -63,6 +66,7 @@ http://localhost:5173/signup
 ### 2. Discord OAuth with Message
 
 **URL with parameters:**
+
 ```
 http://localhost:5173/signup?message=Please%20connect%20your%20Discord%20account
 ```
@@ -70,12 +74,14 @@ http://localhost:5173/signup?message=Please%20connect%20your%20Discord%20account
 **Description:** Discord OAuth step with an informational message.
 
 **How to activate:**
+
 - Add `message` parameter to the URL
 - Or use Storybook: `Components/SignupFlow/DiscordOAuthWithMessage`
 
 ### 3. GitHub OAuth Step (Success State)
 
 **URL with parameters:**
+
 ```
 http://localhost:5173/signup?discord_success=true&discord_verified=true&discord_username=johndoe&discord_display=John%20Doe
 ```
@@ -83,12 +89,14 @@ http://localhost:5173/signup?discord_success=true&discord_verified=true&discord_
 **Description:** Second step after successful Discord verification.
 
 **Required parameters:**
+
 - `discord_success=true`
-- `discord_verified=true` 
+- `discord_verified=true`
 - `discord_username=<username>`
 - `discord_display=<display_name>` (optional)
 
 **Visual elements:**
+
 - GitHub OAuth button
 - Step indicator showing step 2/2
 - Verified Discord username display
@@ -97,6 +105,7 @@ http://localhost:5173/signup?discord_success=true&discord_verified=true&discord_
 ### 4. Support Request Step (Error Fallback)
 
 **URL with parameters:**
+
 ```
 http://localhost:5173/signup?discord_error=not_member&discord_username=johndoe&error_details=User%20not%20found%20in%20server
 ```
@@ -106,21 +115,25 @@ http://localhost:5173/signup?discord_error=not_member&discord_username=johndoe&e
 **Common error scenarios:**
 
 #### Not a Server Member
+
 ```
 ?discord_error=not_member&discord_username=johndoe
 ```
 
 #### Verification Failed
+
 ```
 ?discord_error=not_verified&discord_username=johndoe&user_roles=[{"id":"123","name":"Member"}]
 ```
 
 #### OAuth Failed
+
 ```
 ?discord_error=oauth_failed&error_details=Invalid%20authorization%20code
 ```
 
 **Visual elements:**
+
 - Error explanation
 - Support request form
 - User role display (if available)
@@ -129,12 +142,14 @@ http://localhost:5173/signup?discord_error=not_member&discord_username=johndoe&e
 ### 5. Complete Step (Success)
 
 **How to activate:**
+
 - Submit a support request (requires form submission)
 - Or use direct state manipulation in development
 
 **Description:** Final step after successful support request submission.
 
 **Visual elements:**
+
 - Success message
 - Support request ID
 - Start over option
@@ -146,39 +161,57 @@ http://localhost:5173/signup?discord_error=not_member&discord_username=johndoe&e
 Test error states that appear across the entire signup flow:
 
 #### Network Error
+
 ```javascript
 // In browser console:
-window.history.pushState({}, '', '/signup?error=network_error&error_details=Connection%20timeout');
+window.history.pushState(
+  {},
+  "",
+  "/signup?error=network_error&error_details=Connection%20timeout"
+);
 window.location.reload();
 ```
 
 #### Rate Limited
+
 ```javascript
 // Simulate rate limiting:
-window.history.pushState({}, '', '/signup?discord_error=rate_limited&error_details=Too%20many%20requests');
+window.history.pushState(
+  {},
+  "",
+  "/signup?discord_error=rate_limited&error_details=Too%20many%20requests"
+);
 window.location.reload();
 ```
 
 #### Server Error
+
 ```javascript
 // Simulate server error:
-window.history.pushState({}, '', '/signup?discord_error=server_error&error_details=Internal%20server%20error');
+window.history.pushState(
+  {},
+  "",
+  "/signup?discord_error=server_error&error_details=Internal%20server%20error"
+);
 window.location.reload();
 ```
 
 ### Discord-Specific Error States
 
 #### User Not in Server
+
 ```
 http://localhost:5173/signup?discord_error=not_member&discord_username=testuser
 ```
 
 #### User Not Verified
+
 ```
 http://localhost:5173/signup?discord_error=not_verified&discord_username=testuser&user_roles=[{"id":"123456","name":"Member"}]
 ```
 
 #### Missing Required Role
+
 ```
 http://localhost:5173/signup?discord_error=insufficient_permissions&discord_username=testuser&user_roles=[{"id":"111111","name":"Basic"}]
 ```
@@ -186,11 +219,13 @@ http://localhost:5173/signup?discord_error=insufficient_permissions&discord_user
 ### GitHub OAuth Error States
 
 #### GitHub OAuth Failure
+
 ```
 http://localhost:5173/signup?error=github_oauth_failed&error_details=Invalid%20client%20credentials
 ```
 
 #### Repository Access Denied
+
 ```
 http://localhost:5173/signup?error=repository_access_denied&username=testuser&status=Insufficient%20permissions
 ```
@@ -199,42 +234,46 @@ http://localhost:5173/signup?error=repository_access_denied&username=testuser&st
 
 ### Complete Parameter Reference
 
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `discord_success` | boolean | Discord OAuth success | `true` |
-| `discord_error` | string | Discord error type | `not_member` |
-| `discord_username` | string | Discord username | `johndoe#1234` |
-| `discord_display` | string | Discord display name | `John Doe` |
-| `discord_verified` | boolean | User role verification | `true` |
-| `user_roles` | JSON string | User's Discord roles | `[{"id":"123","name":"Member"}]` |
-| `error_details` | string | Additional error context | `User not found` |
-| `username` | string | GitHub username | `johndoe` |
-| `status` | string | GitHub operation status | `success` |
-| `isCollaborator` | boolean | GitHub collaborator status | `true` |
-| `hasPendingInvitation` | boolean | Pending GitHub invite | `true` |
-| `error` | string | General error message | `oauth_failed` |
-| `message` | string | General info message | `Welcome back!` |
+| Parameter              | Type        | Description                | Example                          |
+| ---------------------- | ----------- | -------------------------- | -------------------------------- |
+| `discord_success`      | boolean     | Discord OAuth success      | `true`                           |
+| `discord_error`        | string      | Discord error type         | `not_member`                     |
+| `discord_username`     | string      | Discord username           | `johndoe#1234`                   |
+| `discord_display`      | string      | Discord display name       | `John Doe`                       |
+| `discord_verified`     | boolean     | User role verification     | `true`                           |
+| `user_roles`           | JSON string | User's Discord roles       | `[{"id":"123","name":"Member"}]` |
+| `error_details`        | string      | Additional error context   | `User not found`                 |
+| `username`             | string      | GitHub username            | `johndoe`                        |
+| `status`               | string      | GitHub operation status    | `success`                        |
+| `isCollaborator`       | boolean     | GitHub collaborator status | `true`                           |
+| `hasPendingInvitation` | boolean     | Pending GitHub invite      | `true`                           |
+| `error`                | string      | General error message      | `oauth_failed`                   |
+| `message`              | string      | General info message       | `Welcome back!`                  |
 
 ### Testing Template URLs
 
 Copy and modify these URLs for testing:
 
 #### Successful Discord + GitHub Flow
+
 ```
 http://localhost:5173/signup?discord_success=true&discord_verified=true&discord_username=testuser&username=testuser&isCollaborator=true&status=success
 ```
 
 #### Discord Success, GitHub Pending
+
 ```
 http://localhost:5173/signup?discord_success=true&discord_verified=true&discord_username=testuser&username=testuser&hasPendingInvitation=true&status=invitation_sent
 ```
 
 #### Discord Failed, Support Needed
+
 ```
 http://localhost:5173/signup?discord_error=not_member&discord_username=testuser&error_details=User%20must%20join%20Discord%20server
 ```
 
 #### Complete Error Flow
+
 ```
 http://localhost:5173/signup?discord_error=oauth_failed&error=network_error&error_details=Connection%20timeout%20during%20authentication
 ```
@@ -246,6 +285,7 @@ http://localhost:5173/signup?discord_error=oauth_failed&error=network_error&erro
 Navigate to these Storybook stories for isolated component testing:
 
 #### SignupFlow Stories
+
 - `Components/SignupFlow/DiscordOAuthStep`
 - `Components/SignupFlow/DiscordOAuthWithMessage`
 - `Components/SignupFlow/GitHubOAuthStep`
@@ -254,6 +294,7 @@ Navigate to these Storybook stories for isolated component testing:
 - `Components/SignupFlow/LoadingState`
 
 #### Error Display Stories
+
 - `Components/ConsolidatedErrorDisplay/Default`
 - `Components/ConsolidatedErrorDisplay/AuthError`
 - `Components/ConsolidatedErrorDisplay/NetworkError`
@@ -263,6 +304,7 @@ Navigate to these Storybook stories for isolated component testing:
 - `Components/ConsolidatedErrorDisplay/CriticalError`
 
 #### Discord Error Stories
+
 - `Components/DiscordErrorDisplay/NotMember`
 - `Components/DiscordErrorDisplay/NotVerified`
 - `Components/DiscordErrorDisplay/OAuthFailed`
@@ -273,6 +315,7 @@ Navigate to these Storybook stories for isolated component testing:
 ### Storybook Controls
 
 Each story includes interactive controls to modify:
+
 - Error messages and types
 - User data (usernames, roles)
 - Loading states
@@ -328,9 +371,9 @@ Use browser console to manipulate state:
 ```javascript
 // Change URL parameters dynamically:
 const url = new URL(window.location);
-url.searchParams.set('discord_error', 'not_member');
-url.searchParams.set('discord_username', 'testuser');
-window.history.pushState({}, '', url);
+url.searchParams.set("discord_error", "not_member");
+url.searchParams.set("discord_username", "testuser");
+window.history.pushState({}, "", url);
 window.location.reload();
 ```
 
@@ -343,12 +386,13 @@ Clear or modify local storage for testing:
 localStorage.clear();
 
 // Set specific test data:
-localStorage.setItem('lastDiscordUsername', 'testuser');
+localStorage.setItem("lastDiscordUsername", "testuser");
 ```
 
 ### 3. Network Tab Debugging
 
 Monitor network requests during OAuth flows:
+
 1. Open browser Developer Tools
 2. Go to Network tab
 3. Navigate through signup flow
@@ -360,7 +404,7 @@ The components log important state changes:
 
 ```javascript
 // Enable verbose logging:
-localStorage.setItem('debug', 'signup:*');
+localStorage.setItem("debug", "signup:*");
 ```
 
 ### 5. Testing Error Boundaries
@@ -369,8 +413,8 @@ Test error boundary behavior:
 
 ```javascript
 // Trigger React error boundary:
-window.addEventListener('error', (e) => {
-  console.log('Error boundary triggered:', e);
+window.addEventListener("error", (e) => {
+  console.log("Error boundary triggered:", e);
 });
 
 // In React DevTools, you can also trigger errors manually
@@ -379,6 +423,7 @@ window.addEventListener('error', (e) => {
 ### 6. Mobile Testing
 
 Test responsive states:
+
 1. Open browser Developer Tools
 2. Enable device simulation
 3. Test different screen sizes
@@ -387,6 +432,7 @@ Test responsive states:
 ### 7. Accessibility Testing
 
 Test screen reader compatibility:
+
 1. Install screen reader extension
 2. Navigate signup flow with keyboard only
 3. Verify ARIA labels and error announcements
@@ -397,6 +443,7 @@ Test screen reader compatibility:
 ### 1. Concurrent User Sessions
 
 Test multiple user scenarios:
+
 1. Open multiple browser tabs
 2. Use different usernames in each tab
 3. Test race conditions and state conflicts
@@ -404,6 +451,7 @@ Test multiple user scenarios:
 ### 2. Network Interruption
 
 Test offline/online behavior:
+
 1. Start signup flow
 2. Disable network in Developer Tools
 3. Attempt actions
@@ -412,6 +460,7 @@ Test offline/online behavior:
 ### 3. OAuth Token Expiration
 
 Simulate expired tokens:
+
 1. Complete Discord OAuth
 2. Wait or manually expire token
 3. Attempt GitHub OAuth
@@ -420,6 +469,7 @@ Simulate expired tokens:
 ### 4. Browser Back/Forward
 
 Test navigation history:
+
 1. Complete partial signup flow
 2. Use browser back button
 3. Use forward button
