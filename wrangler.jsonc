@@ -12,50 +12,45 @@
     "directory": "./public",
     "binding": "ASSETS",
   },
-  "vars": {
-  },
+  "vars": {},
   "observability": {
     "enabled": true,
   },
-  "routes": [
-    {
-      "pattern": "insiders.infima-games.com",
-      "custom_domain": true,
+
+  "env": {
+    // Production.
+    "production": {
+      "name": "infima-games-insiders-worker-production",
+      "vars": {
+        // You can override variables for production if needed
+      },
+      "routes": [
+        {
+          "pattern": "insiders.infima-games.com",
+          "custom_domain": true,
+        },
+        {
+          "pattern": "insiders.infima-games.com/*",
+          "zone_name": "infima-games.com",
+        },
+      ],
     },
-    {
-      "pattern": "insiders.infima-games.com/*",
-      "zone_name": "infima-games.com",
+    // Staging.
+    "staging": {
+      "name": "infima-games-insiders-worker-staging",
+      "vars": {
+        // You can override variables for staging if needed
+      },
+      "routes": [
+        {
+          "pattern": "staging.insiders.infima-games.com",
+          "custom_domain": true,
+        },
+        {
+          "pattern": "staging.insiders.infima-games.com/*",
+          "zone_name": "infima-games.com",
+        },
+      ],
     },
-  ],
-  "env": {},
-  /**
-   * Smart Placement
-   * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-   */
-  // "placement": { "mode": "smart" }
-  /**
-   * Bindings
-   * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-   * databases, object storage, AI inference, real-time communication and more.
-   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-   */
-  /**
-   * Environment Variables
-   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-   */
-  // "vars": { "MY_VARIABLE": "production_value" }
-  /**
-   * Note: Use secrets to store sensitive data.
-   * https://developers.cloudflare.com/workers/configuration/secrets/
-   */
-  /**
-   * Static Assets
-   * https://developers.cloudflare.com/workers/static-assets/binding/
-   */
-  // "assets": { "directory": "./public/", "binding": "ASSETS" }
-  /**
-   * Service Bindings (communicate between multiple Workers)
-   * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-   */
-  // "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+  },
 }

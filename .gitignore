@@ -4,10 +4,6 @@ node_modules/**
 dist/**
 build/**
 
-# Environment files
-.env
-.env.local
-
 # TypeScript declaration files
 **/*.d.ts
 
@@ -23,3 +19,14 @@ build/**
 # Claude Code Ignore
 .claude
 CLAUDE.md
+
+# Environment files
+.env
+.env.local
+.env.*
+.env.*.local
+.dev.vars
+
+# Keep the example files
+!.env.*.example
+!.dev.vars.example
