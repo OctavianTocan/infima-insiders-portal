@@ -1,0 +1,25 @@
+# Dependencies and build artifacts
+node_modules/**
+.react-router/**
+dist/**
+build/**
+
+# Environment files
+.env
+.env.local
+
+# TypeScript declaration files
+**/*.d.ts
+
+# Cloudflare Wrangler files
+.wrangler/**
+
+# IDE and editor files
+.vscode/**
+
+# Azure deployment files
+.azure/**
+
+# Claude Code Ignore
+.claude
+CLAUDE.md
