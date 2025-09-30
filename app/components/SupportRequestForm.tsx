@@ -18,11 +18,29 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
   submissionError,
   onClearError,
 }) => {
+  const [email, setEmail] = useState("");
   const [reason, setReason] = useState("");
   const isSubmitting = false; // TODO: Add prop or state for submitting
-  const discordUsername = propDiscordUsername || "Unknown User";
+
+  const discordUsername = propDiscordUsername?.trim() ?? "";
   const verificationError =
     propVerificationError || "Unknown verification error";
+  const discordInviteUrl = "https://discord.gg/sqPFPe2uuU";
+
+  const handleInputChange = (
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) =>
+    (
+      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+      setter(event.target.value);
+      if (submissionError) {
+        onClearError?.();
+      }
+    };
+
+  const disableSubmit =
+    isSubmitting || !reason.trim().length || !email.trim().length;
 
   return (
     <div className="input-group">
@@ -32,13 +50,50 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
           <span className="error-text">{verificationError}</span>
         </p>
         <p className="instruction-text">
-          Please provide details us with details about what happened.
+          Please let us know what happened so we can help. You can also{" "}
+          <a
+            href={discordInviteUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            join our Discord server
+          </a>{" "}
+          for real-time support.
         </p>
       </div>
 
       <Form method="post">
         <input type="hidden" name="actionType" value="support-request" />
-        <input type="hidden" name="discordUsername" value={discordUsername} />
+        <input
+          type="hidden"
+          name="verificationError"
+          value={verificationError}
+        />
+        <input
+          type="hidden"
+          name="discordUsername"
+          value={discordUsername}
+        />
+
+        <div className="input-group">
+          <label htmlFor="email" className="input-label">
+            Contact Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={handleInputChange(setEmail)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            disabled={isSubmitting}
+            required
+          />
+          <small className="input-help">
+            We'll use this to follow up about your request.
+          </small>
+        </div>
 
         <div className="input-group">
           <label htmlFor="reason" className="input-label">
@@ -48,12 +103,7 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
             id="reason"
             name="message"
             value={reason}
-            onChange={(e) => {
-              setReason(e.target.value);
-              if (submissionError) {
-                onClearError?.();
-              }
-            }}
+            onChange={handleInputChange(setReason)}
             placeholder="Explain what happened so we can help you out..."
             className="reason-textarea"
             rows={4}
@@ -83,7 +133,7 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
           <button
             type="submit"
             className="submit-btn"
-            disabled={isSubmitting || !reason.trim()}
+            disabled={disableSubmit}
           >
             {isSubmitting ? "Submitting..." : "Submit Request"}
           </button>
@@ -94,3 +144,4 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
 };
 
 export default SupportRequestForm;
+

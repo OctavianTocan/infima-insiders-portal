@@ -52,11 +52,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     // Add user as collaborator using PAT
     let invitationStatus = "";
+    let redirectToGitHubInvitations = false;
 
     try {
       const result = await addCollaborator(username, env);
 
       if (result.status === 201) {
+        invitationStatus = "Successfully invited to repository";
+        redirectToGitHubInvitations = true;
+
         await sendWebhookNotification(env, {
           event: "user_invited",
           username: username,
@@ -64,10 +68,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           message: `Successfully invited ${username} to repository`,
           metadata: { invitationType: result.invitationStatus },
         });
-        // Redirect to GitHub invitations page
-        return redirect(
-          `https://github.com/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/invitations`
-        );
       } else if (result.status === 204) {
         invitationStatus = "The user is already a collaborator";
         await sendWebhookNotification(env, {
@@ -103,7 +103,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       await checkCollaboratorStatus(username, env);
 
     // WHY: Send comprehensive Slack notification for signup completion
-    if (env.SLACK_WEBHOOK_URL && (isCollaborator || hasPendingInvitation)) {
+    const shouldSendSlackNotification =
+      Boolean(env.SLACK_WEBHOOK_URL) &&
+      (isCollaborator || hasPendingInvitation || redirectToGitHubInvitations);
+
+    if (shouldSendSlackNotification) {
       try {
         const signupStatus = isCollaborator ? "success" : "partial";
         const slackPayload = createSignupNotificationPayload({
@@ -134,6 +138,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         invitationStatus,
         isCollaborator,
         hasPendingInvitation,
+        redirectedToGitHubInvitations: redirectToGitHubInvitations,
         finalStatus: isCollaborator
           ? "collaborator"
           : hasPendingInvitation
@@ -141,6 +146,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             : "already_invited",
       },
     });
+
+    if (redirectToGitHubInvitations) {
+      return redirect(
+        `https://github.com/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/invitations`
+      );
+    }
 
     // Redirect back to signup page with status
     const frontendUrl = env.FRONTEND_URL || url.origin;

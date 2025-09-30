@@ -194,8 +194,8 @@ export async function sendSlackWebhook(
  * ```typescript
  * const payload = createSupportRequestPayload({
  *   requestId: 'req_123456',
+ *   email: 'player@example.com',
  *   username: 'john_doe',
- *   discordId: '123456789012345678',
  *   message: 'Unable to verify Discord membership',
  *   errorType: 'DISCORD_NOT_MEMBER',
  *   timestamp: new Date()
@@ -206,15 +206,15 @@ export async function sendSlackWebhook(
  */
 export function createSupportRequestPayload(supportData: {
   requestId: string;
-  username: string;
-  discordId?: string;
+  email: string;
+  username?: string;
   message: string;
   errorType?: string;
   errorDetails?: string;
   timestamp: Date;
 }): SlackWebhookPayload {
   return {
-    text: "🆘 New Support Request Submitted",
+    text: ":sos: New Support Request Submitted",
     username: "Support Bot",
     icon_emoji: ":sos:",
     attachments: [
@@ -228,18 +228,22 @@ export function createSupportRequestPayload(supportData: {
             short: true,
           },
           {
-            title: "Username",
-            value: supportData.username,
+            title: "Contact Email",
+            value: supportData.email,
             short: true,
           },
+          ...(supportData.username
+            ? [
+                {
+                  title: "Discord Username",
+                  value: supportData.username,
+                  short: true,
+                },
+              ]
+            : []),
           {
-            title: "Discord ID",
-            value: supportData.discordId || "Not provided",
-            short: true,
-          },
-          {
-            title: "Error Type",
-            value: supportData.errorType || "General Issue",
+            title: "Issue Type",
+            value: supportData.errorType || "GENERAL_SUPPORT",
             short: true,
           },
           {

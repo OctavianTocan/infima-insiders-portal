@@ -8,7 +8,8 @@ const meta: Meta<typeof SupportRequestForm> = {
     layout: "centered",
     docs: {
       description: {
-        component: "Support request form for users who cannot verify Discord",
+        component:
+          "Support request form for Discord verification issues with email follow-up",
       },
     },
   },
@@ -54,16 +55,32 @@ export const Default: Story = {
     submissionError: null,
     onClearError: () => console.log("Error cleared"),
   },
-  play: async ({ canvasElement, args }) => {
-    // WHY: Tests form submission interaction
+  play: async ({ canvasElement }) => {
     const canvas = canvasElement as HTMLElement;
+    const emailInput = canvas.querySelector(
+      'input[name="email"]'
+    ) as HTMLInputElement | null;
+    const messageInput = canvas.querySelector(
+      'textarea[name="message"]'
+    ) as HTMLTextAreaElement | null;
+
+    if (emailInput) {
+      emailInput.value = "player@example.com";
+      emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    if (messageInput) {
+      messageInput.value = "I cannot finish the Discord verification.";
+      messageInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
     const submitButton = canvas.querySelector(
       'button[type="submit"]'
-    ) as HTMLButtonElement;
+    ) as HTMLButtonElement | null;
 
     if (submitButton) {
       submitButton.click();
-      console.log("✅ Support form submission tested");
+      console.log("Support form submission tested");
     }
   },
 };
@@ -73,8 +90,7 @@ export const WithSubmissionError: Story = {
     ...Default.args,
     submissionError: "Failed to submit support request. Please try again.",
   },
-  play: async ({ canvasElement, args }) => {
-    // WHY: Tests error clearing interaction
+  play: async ({ canvasElement }) => {
     const canvas = canvasElement as HTMLElement;
     const clearErrorButton = canvas.querySelector(
       ".error-clear-button"
@@ -82,7 +98,7 @@ export const WithSubmissionError: Story = {
 
     if (clearErrorButton) {
       clearErrorButton.click();
-      console.log("✅ Error clearing tested");
+      console.log("Error clearing tested");
     }
   },
 };
@@ -92,8 +108,7 @@ export const WithDifferentError: Story = {
     ...Default.args,
     verificationError: "Rate limited by Discord API",
   },
-  play: async ({ canvasElement, args }) => {
-    // WHY: Tests back button interaction
+  play: async ({ canvasElement }) => {
     const canvas = canvasElement as HTMLElement;
     const backButton = canvas.querySelector(
       'button[type="button"]'
@@ -101,7 +116,7 @@ export const WithDifferentError: Story = {
 
     if (backButton) {
       backButton.click();
-      console.log("✅ Back button tested");
+      console.log("Back button tested");
     }
   },
 };

@@ -122,11 +122,44 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   // Handle support request submission
   if (actionType === "support-request") {
+    const emailValue = formData.get("email");
+    const messageValue = formData.get("message");
+    const discordUsernameValue = formData.get("discordUsername");
+    const verificationErrorValue = formData.get("verificationError");
+
+    if (typeof emailValue !== "string" || typeof messageValue !== "string") {
+      return { success: false, error: "Invalid support request payload" };
+    }
+
+    const email = emailValue.trim();
+    const message = messageValue.trim();
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!isEmailValid) {
+      return {
+        success: false,
+        error: "Please provide a valid email address so we can follow up.",
+      };
+    }
+
+    if (!message) {
+      return {
+        success: false,
+        error: "Please share a few details about what happened.",
+      };
+    }
+
     const supportData = {
-      discordUsername: formData.get("discordUsername") as string,
-      message: formData.get("message") as string,
-      discordId: formData.get("discordId") as string,
-      verificationError: formData.get("verificationError") as string,
+      email,
+      message,
+      discordUsername:
+        typeof discordUsernameValue === "string" && discordUsernameValue.trim()
+          ? discordUsernameValue.trim()
+          : undefined,
+      verificationError:
+        typeof verificationErrorValue === "string" && verificationErrorValue.trim()
+          ? verificationErrorValue.trim()
+          : undefined,
     };
 
     try {
@@ -137,6 +170,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       return { success: false, error: (submissionError as Error).message };
     }
   }
+
 
   return { success: false, error: "Unknown action type" };
 }
@@ -154,18 +188,18 @@ export async function action({ request, context }: Route.ActionArgs) {
  * @example
  * ```typescript
  * const requestId = await createSupportRequest({
- *   discordUsername: 'john_doe',
- *   discordId: '123456789',
+ *   email: 'player@example.com',
  *   message: 'Cannot verify Discord membership',
- *   verificationError: 'DISCORD_NOT_MEMBER'
+ *   verificationError: 'DISCORD_NOT_MEMBER',
+ *   discordUsername: 'john_doe',
  * }, env);
  * ```
  */
 async function createSupportRequest(
   supportData: {
-    discordUsername: string;
-    discordId?: string;
+    email: string;
     message: string;
+    discordUsername?: string;
     verificationError?: string;
   },
   env: any
@@ -179,8 +213,8 @@ async function createSupportRequest(
     try {
       const slackPayload = createSupportRequestPayload({
         requestId,
+        email: supportData.email,
         username: supportData.discordUsername,
-        discordId: supportData.discordId,
         message: supportData.message,
         errorType: supportData.verificationError || "GENERAL_SUPPORT",
         timestamp,
@@ -216,8 +250,8 @@ async function createSupportRequest(
           requestId,
           timestamp: timestamp.toISOString(),
           data: {
+            email: supportData.email,
             discordUsername: supportData.discordUsername,
-            discordId: supportData.discordId,
             message: supportData.message,
             verificationError: supportData.verificationError,
           },
