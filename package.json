@@ -11,7 +11,7 @@
     "dev": "wrangler dev --env staging --local",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
-    "deploy:production": "npm run build:production && wrangler deploy",
+    "deploy:production": "npm run secrets:deploy:production && npm run build:production && wrangler deploy",
     "deploy:staging": "npm run secrets:deploy:staging && npm run build:staging && wrangler deploy",
     "deploy": "echo 'Please specify environment: npm run deploy:staging or npm run deploy:production' && exit 1",
     "secrets:deploy:production": "powershell -ExecutionPolicy Bypass -File ./scripts/deploy-secrets.ps1",
