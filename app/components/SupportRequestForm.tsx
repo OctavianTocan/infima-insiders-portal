@@ -86,6 +86,7 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
             value={email}
             onChange={handleInputChange(setEmail)}
             placeholder="you@example.com"
+            className="discord-input"
             autoComplete="email"
             disabled={isSubmitting}
             required

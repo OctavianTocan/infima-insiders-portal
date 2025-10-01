@@ -30,3 +30,6 @@ CLAUDE.md
 # Keep the example files
 !.env.*.example
 !.dev.vars.example
+
+# Ignore storybook build output for now.
+storybook-static/**
