@@ -5,6 +5,8 @@ interface GitHubOAuthStepProps {
   message: string | null;
   onLogin: () => void;
   onBack: () => void;
+  showSupport?: boolean;
+  onSupportRequest?: () => void;
 }
 
 /**
@@ -16,7 +18,11 @@ export default function GitHubOAuthStep({
   message,
   onLogin,
   onBack,
+  showSupport = false,
+  onSupportRequest,
 }: GitHubOAuthStepProps) {
+  const isError = message?.startsWith("Error") || (message && !message.includes("Welcome") && !message.includes("pending invitation"));
+  
   return (
     <div className="form-content">
       <div className="form-header">
@@ -30,10 +36,21 @@ export default function GitHubOAuthStep({
       {message && (
         <div className="status-message">
           <p
-            className={`message ${message.startsWith("Error") ? "error" : "success"}`}
+            className={`message ${isError ? "error" : "success"}`}
           >
             {message}
           </p>
+          {showSupport && onSupportRequest && (
+            <p className="support-text">
+              Need help? <button 
+                onClick={onSupportRequest}
+                className="support-link"
+                type="button"
+              >
+                Contact support
+              </button> for assistance.
+            </p>
+          )}
         </div>
       )}
 

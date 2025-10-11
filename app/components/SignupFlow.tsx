@@ -43,12 +43,16 @@ interface SignupFlowProps extends StepComponentProps {
   userRoles: Array<{ id: string; name: string }>;
   /** Error details from OAuth callback */
   errorDetails: string | null;
+  /** Whether to show support link on GitHub step */
+  showSupport?: boolean;
   /** Callback when GitHub login is initiated */
   onGitHubLogin: () => void;
   /** Callback when navigating back to Discord step */
   onBackToDiscord: () => void;
   /** Callback when support request is submitted */
   onSupportSubmitted: (requestId: string) => void;
+  /** Callback when support request is initiated */
+  onSupportRequest?: () => void;
   /** Loading state for accessibility */
   loading: boolean;
 }
@@ -89,9 +93,11 @@ export function SignupFlow({
   discordUsername,
   userRoles,
   errorDetails,
+  showSupport = false,
   onGitHubLogin,
   onBackToDiscord,
   onSupportSubmitted,
+  onSupportRequest,
   loading = false,
   className = "",
   "data-testid": testId = "signup-flow",
@@ -121,6 +127,8 @@ export function SignupFlow({
           message={message ?? null}
           onLogin={onGitHubLogin}
           onBack={onBackToDiscord}
+          showSupport={showSupport}
+          onSupportRequest={onSupportRequest}
         />
       );
       break;

@@ -463,6 +463,29 @@
     border-color: var(--color-error);
   }
 
+  .support-text {
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-secondary);
+    color: var(--color-text);
+    text-align: center;
+  }
+
+  .support-link {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0;
+    margin: 0;
+    
+    &:hover {
+      color: var(--color-primary-dark);
+    }
+  }
+
   .error-message {
     background-color: rgba(198, 40, 40, 0.1);
     color: var(--color-error);
