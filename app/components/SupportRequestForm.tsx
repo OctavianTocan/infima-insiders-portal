@@ -25,14 +25,12 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
   const discordUsername = propDiscordUsername?.trim() ?? "";
   const verificationError =
     propVerificationError || "Unknown verification error";
+  // TODO: Needs to go inside of a config file, somewhere. Not here randomly. Don't hardcode invites, this is bad.
   const discordInviteUrl = "https://discord.gg/sqPFPe2uuU";
 
-  const handleInputChange = (
-    setter: React.Dispatch<React.SetStateAction<string>>
-  ) =>
-    (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
+  const handleInputChange =
+    (setter: React.Dispatch<React.SetStateAction<string>>) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setter(event.target.value);
       if (submissionError) {
         onClearError?.();
@@ -51,11 +49,7 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
         </p>
         <p className="instruction-text">
           Please let us know what happened so we can help. You can also{" "}
-          <a
-            href={discordInviteUrl}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
+          <a href={discordInviteUrl} target="_blank" rel="noreferrer noopener">
             join our Discord server
           </a>{" "}
           for real-time support.
@@ -69,11 +63,7 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
           name="verificationError"
           value={verificationError}
         />
-        <input
-          type="hidden"
-          name="discordUsername"
-          value={discordUsername}
-        />
+        <input type="hidden" name="discordUsername" value={discordUsername} />
 
         <div className="input-group">
           <label htmlFor="email" className="input-label">
@@ -131,11 +121,7 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
           >
             Back
           </button>
-          <button
-            type="submit"
-            className="submit-btn"
-            disabled={disableSubmit}
-          >
+          <button type="submit" className="submit-btn" disabled={disableSubmit}>
             {isSubmitting ? "Submitting..." : "Submit Request"}
           </button>
         </div>
@@ -145,4 +131,3 @@ const SupportRequestForm: React.FC<SupportRequestFormProps> = ({
 };
 
 export default SupportRequestForm;
-
