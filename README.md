@@ -98,6 +98,49 @@ Use these stories to verify component behavior, test edge cases, and develop new
 
 📖 **[Component States Testing Guide](./COMPONENT_STATES_GUIDE.md)** - Comprehensive guide for activating and testing different component states during development.
 
+### Dependency Auditing
+
+This project runs automated dependency audits on every pull request via GitHub Actions. If your PR fails the audit check:
+
+1. **Check the audit report**:
+   ```bash
+   npm audit
+   ```
+
+2. **Review vulnerabilities**: Examine the severity and affected packages. Focus on `moderate` and higher severity issues.
+
+3. **Fix vulnerabilities**:
+   ```bash
+   npm audit fix
+   ```
+   
+   For breaking changes that require manual review:
+   ```bash
+   npm audit fix --force
+   ```
+   ⚠️ **Warning**: `--force` may install breaking changes. Test thoroughly after using this option.
+
+4. **Update specific packages** if automatic fixes don't work:
+   ```bash
+   npm update <package-name>
+   ```
+
+5. **Check for updates** to see what packages can be safely upgraded:
+   ```bash
+   npm outdated
+   ```
+
+6. **Verify the fix**:
+   ```bash
+   npm audit
+   npm run typecheck
+   npm run storybook  # Test that nothing broke
+   ```
+
+7. **Commit and push** your package updates. The PR check will re-run automatically.
+
+If a vulnerability cannot be fixed (no patch available), document it in the PR description and discuss with maintainers.
+
 ### Build & Deploy
 
 ```bash
