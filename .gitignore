@@ -36,3 +36,4 @@ storybook-static/**
 
 # Ignore TypeScript build info files
 *.tsbuildinfo
+*wrangler.jsonc
