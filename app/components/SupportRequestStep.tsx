@@ -57,12 +57,13 @@ export default function SupportRequestStep({
         {/* <p className="form-subtitle">We couldn't verify your Discord account</p> */}
       </div>
 
-      {/* {discordError && (
+      {/* WHY: Show user-friendly error message for Discord verification issues */}
+      {discordError && (
         <ErrorMessageDisplay
           message={getErrorMessage(discordError, discordUsername)}
           type="error"
         />
-      )} */}
+      )}
 
       {/* <div className="form-header">
         <h3 className="form-title">Request Support</h3>
