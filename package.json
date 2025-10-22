@@ -5,10 +5,10 @@
   "scripts": {
     "cf-typegen": "wrangler types",
     "postinstall": "npm run cf-typegen",
-    "typecheck": "npm run cf-typegen && vite typegen && tsc -b",
+    "typecheck": "npm run cf-typegen && tsc -b",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "dev": "wrangler dev --env staging --local",
+    "dev": "wrangler dev --local",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
     "deploy:production": "npm run secrets:deploy:production && npm run build:production && wrangler deploy",
