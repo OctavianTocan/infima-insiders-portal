@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "infima-games-insiders-worker",
+  "name": "signup-portal",
   "compatibility_date": "2025-09-13",
   "main": "./workers/app.ts",
   "workers_dev": false,
@@ -20,35 +20,35 @@
   "env": {
     // Production.
     "production": {
-      "name": "infima-games-insiders-worker-production",
+      "name": "signup-portal-production",
       "vars": {
         // You can override variables for production if needed
       },
       "routes": [
         {
-          "pattern": "insiders.infima-games.com",
+          "pattern": "production.your-domain.com",
           "custom_domain": true,
         },
         {
-          "pattern": "insiders.infima-games.com/*",
-          "zone_name": "infima-games.com",
+          "pattern": "production.your-domain.com/*",
+          "zone_name": "your-domain.com",
         },
       ],
     },
     // Staging.
     "staging": {
-      "name": "infima-games-insiders-worker-staging",
+      "name": "signup-portal-staging",
       "vars": {
         // You can override variables for staging if needed
       },
       "routes": [
         {
-          "pattern": "staging.insiders.infima-games.com",
+          "pattern": "staging.your-domain.com",
           "custom_domain": true,
         },
         {
-          "pattern": "staging.insiders.infima-games.com/*",
-          "zone_name": "infima-games.com",
+          "pattern": "staging.your-domain.com/*",
+          "zone_name": "your-domain.com",
         },
       ],
     },
