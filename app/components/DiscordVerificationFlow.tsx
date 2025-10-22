@@ -1,52 +1,52 @@
-import React, { useState } from 'react';
-import { DiscordProvider } from './DiscordContext';
-import DiscordOAuthButton from './DiscordOAuthButton';
-import DiscordErrorDisplay from './DiscordErrorDisplay';
-import SupportRequestForm from './SupportRequestForm';
+import React, { useState } from "react";
+import { DiscordProvider } from "./DiscordContext";
+import DiscordOAuthButton from "./DiscordOAuthButton";
+import DiscordErrorDisplay from "./DiscordErrorDisplay";
+import SupportRequestForm from "./SupportRequestForm";
 
-type ViewState = 'oauth' | 'support' | 'success';
+type ViewState = "oauth" | "support" | "success";
 
 /**
  * Discord verification flow wrapper component that demonstrates
  * proper composition and context usage according to React guidelines
  */
 const DiscordVerificationFlow: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewState>('oauth');
+  const [currentView, setCurrentView] = useState<ViewState>("oauth");
 
   const handleSupportRequest = () => {
-    setCurrentView('support');
+    setCurrentView("support");
   };
 
   const handleSupportSubmitted = (requestId: string) => {
-    console.log('Support request submitted:', requestId);
-    setCurrentView('success');
+    console.log("Support request submitted:", requestId);
+    setCurrentView("success");
   };
 
   const handleBack = () => {
-    setCurrentView('oauth');
+    setCurrentView("oauth");
   };
 
   const renderCurrentView = () => {
     switch (currentView) {
-      case 'oauth':
+      case "oauth":
         return <DiscordOAuthButton />;
-      
-      case 'support':
+
+      case "support":
         return (
-          <SupportRequestForm 
+          <SupportRequestForm
             onSupportSubmitted={handleSupportSubmitted}
             onBack={handleBack}
           />
         );
-      
-      case 'success':
+
+      case "success":
         return (
           <div className="success-message">
             <h3>✅ Verification Complete</h3>
             <p>Your request has been submitted successfully!</p>
           </div>
         );
-      
+
       default:
         return null;
     }
