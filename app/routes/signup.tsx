@@ -56,6 +56,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const hasPendingInvitation =
     url.searchParams.get("hasPendingInvitation") === "true";
   const error = url.searchParams.get("error");
+  const showSupport = url.searchParams.get("show_support") === "true";
 
   // Parse user roles from JSON string if present
   let parsedUserRoles: { id: string; name: string }[] = [];
@@ -70,10 +71,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // Generate status message based on OAuth results
   let message = null;
   if (error) {
-    message = `Error: ${error}`;
-    if (errorDetails) {
-      message += ` - ${errorDetails}`;
-    }
+    message = error; // Use the user-friendly error message directly
   } else if (username) {
     if (isCollaborator) {
       if (status === "The user is already a collaborator") {
@@ -104,6 +102,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     discordConfig: {
       inviteLink: env.DISCORD_GUILD_INVITE_LINK,
     },
+    showSupport,
   };
 }
 
@@ -299,6 +298,7 @@ export default function SignupPage({
     discordUsername,
     userRoles,
     errorDetails,
+    showSupport,
   } = loaderData;
 
   // WHY: Extract all signup flow logic into custom hook for clean separation
@@ -311,6 +311,7 @@ export default function SignupPage({
     isLoading,
     goToDiscord,
     handleSupportSubmitted,
+    goToSupportRequest,
     clearError,
   } = useSignupFlow(loaderData, actionData);
   const shouldShowGlobalError =
@@ -394,10 +395,12 @@ export default function SignupPage({
             discordUsername={discordUsername}
             userRoles={userRoles}
             errorDetails={errorDetails}
+            showSupport={showSupport}
             loading={isLoading}
             onGitHubLogin={handleGitHubLogin}
             onBackToDiscord={goToDiscord}
             onSupportSubmitted={handleSupportSubmitted}
+            onSupportRequest={goToSupportRequest}
           />
 
           {/* WHY: Conditionally show GitHub signup link for relevant steps */}

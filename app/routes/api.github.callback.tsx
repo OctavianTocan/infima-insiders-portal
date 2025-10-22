@@ -168,14 +168,28 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   } catch (error) {
     console.error("Error during GitHub OAuth process:", error);
 
+    // WHY: Parse error message to provide user-friendly feedback
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    let userFriendlyError = "We encountered an issue processing your request.";
+    let shouldShowSupportLink = true;
+
+    // Check for specific error types and provide appropriate messages
+    if (errorMessage.includes("GITHUB_USER_NOT_FOUND")) {
+      userFriendlyError = "GitHub user not found. Please verify your username.";
+    } else if (errorMessage.includes("GITHUB_API_ERROR")) {
+      userFriendlyError = "Unable to connect to GitHub. Please try again later.";
+    } else if (errorMessage.includes("Missing required GitHub environment variables")) {
+      userFriendlyError = "Service configuration error. Please contact support.";
+    } else if (errorMessage.includes("No authorization code")) {
+      userFriendlyError = "GitHub authorization failed. Please try signing in again.";
+      shouldShowSupportLink = false;
+    }
+
     // WHY: Send error notification to Slack for monitoring
     if (env.SLACK_WEBHOOK_URL) {
       try {
         const errorPayload = createErrorNotificationPayload({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unknown GitHub OAuth error",
+          error: errorMessage,
           context: `GitHub OAuth callback for user: ${username}`,
           userId: username !== "unknown" ? username : undefined,
           timestamp: new Date(),
@@ -195,16 +209,21 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       event: "authentication_failed",
       username: username || "unknown",
       status: "error",
-      message: `OAuth process failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      message: `OAuth process failed: ${errorMessage}`,
       metadata: {
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
+        userFriendlyError,
       },
     });
 
     const frontendUrl = env.FRONTEND_URL || url.origin;
     const redirectUrl = new URL("/signup", frontendUrl);
-    redirectUrl.searchParams.set("error", "OAuth process failed");
-    redirectUrl.searchParams.set("error_details", (error as Error).message);
+    redirectUrl.searchParams.set("error", userFriendlyError);
+    if (shouldShowSupportLink) {
+      redirectUrl.searchParams.set("show_support", "true");
+    }
+    // Keep the raw error for debugging (only logged, not shown to user)
+    console.error("Raw error details:", errorMessage);
 
     return redirect(redirectUrl.toString());
   }

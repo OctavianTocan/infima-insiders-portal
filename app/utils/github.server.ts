@@ -6,7 +6,7 @@
  * - OAuth token exchange
  * - User authentication
  * - Repository collaboration management
- * - Webhook and Slack notifications
+ * - Webhook notifications
  *
  * @module GitHubServer
  */
@@ -43,8 +43,6 @@ const GITHUB_USER_AGENT = "OctavianTocan";
  * @property WEBHOOK_URL - Optional webhook endpoint for notifications
  * @property FRONTEND_URL - Optional frontend URL for redirects
  * @property SLACK_WEBHOOK_URL - Optional Slack webhook URL
- * @property SLACK_BOT_TOKEN - Optional Slack bot token for DMs
- * @property ADMIN_SLACK_USER_ID - Optional Slack admin user ID for notifications
  */
 interface GitHubEnv {
   GITHUB_CLIENT_ID: string;
@@ -55,8 +53,6 @@ interface GitHubEnv {
   WEBHOOK_URL?: string;
   FRONTEND_URL?: string;
   SLACK_WEBHOOK_URL?: string;
-  SLACK_BOT_TOKEN?: string;
-  ADMIN_SLACK_USER_ID?: string;
 }
 
 interface GitHubTokenResponse {
@@ -150,6 +146,25 @@ export async function addCollaborator(
   username: string,
   env: GitHubEnv
 ): Promise<{ status: number; invitationStatus: string }> {
+  // First, check if user is already a collaborator
+  // This helps us provide better error messages
+  const checkResponse = await fetch(
+    `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
+    {
+      headers: {
+        Authorization: `Bearer ${env.GITHUB_PAT}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": GITHUB_USER_AGENT,
+      },
+    }
+  );
+
+  // If user is already a collaborator, return early
+  if (checkResponse.status === 204) {
+    return { status: 204, invitationStatus: "existing" };
+  }
+
+  // Proceed with adding the collaborator
   const addCollaboratorResponse = await fetch(
     `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
     {
@@ -170,6 +185,29 @@ export async function addCollaborator(
     return { status: 204, invitationStatus: "existing" };
   } else if (addCollaboratorResponse.status === 422) {
     return { status: 422, invitationStatus: "pending" };
+  } else if (addCollaboratorResponse.status === 404) {
+    // 404 could mean the user doesn't exist or permissions issue
+    // Check if the user is already a collaborator as a fallback
+    const verifyResponse = await fetch(
+      `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
+      {
+        headers: {
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": GITHUB_USER_AGENT,
+        },
+      }
+    );
+    
+    if (verifyResponse.status === 204) {
+      // User is already a collaborator
+      return { status: 204, invitationStatus: "existing" };
+    }
+    
+    // User genuinely not found or permission issue
+    throw new Error(
+      `GITHUB_USER_NOT_FOUND: Unable to add GitHub user '${username}' to the repository. Please verify the username is correct.`
+    );
   } else {
     // This helps capture error details from GitHub API
     let errorData;
@@ -179,7 +217,7 @@ export async function addCollaborator(
       errorData = await addCollaboratorResponse.text();
     }
     throw new Error(
-      `GitHub API error: ${addCollaboratorResponse.status} - ${JSON.stringify(errorData)}`
+      `GITHUB_API_ERROR: Unable to process your request. Please contact support if this issue persists. (Status: ${addCollaboratorResponse.status})`
     );
   }
 }
@@ -281,76 +319,5 @@ export async function sendWebhookNotification(
     console.log("Webhook notification sent successfully");
   } catch (error) {
     console.error("Failed to send webhook notification:", error);
-  }
-}
-
-/**
- * Sends Slack notification for new signups.
- */
-export async function sendSlackNotification(
-  env: GitHubEnv,
-  username: string,
-  status: string
-): Promise<void> {
-  if (!env.SLACK_BOT_TOKEN || !env.ADMIN_SLACK_USER_ID) return;
-
-  try {
-    // First, open a DM conversation with the admin user
-    const openResponse = await fetch(
-      "https://slack.com/api/conversations.open",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          users: env.ADMIN_SLACK_USER_ID,
-        }),
-      }
-    );
-
-    interface SlackOpenResponse {
-      ok: boolean;
-      channel: { id: string };
-      error?: string;
-    }
-    const openData = (await openResponse.json()) as SlackOpenResponse;
-    if (!openData.ok) {
-      throw new Error(`Failed to open DM: ${openData.error}`);
-    }
-
-    const channelId = openData.channel.id;
-
-    // Now, send the message
-    const message =
-      status === "new"
-        ? `🎉 New user joined: ${username} has been invited to the repository!`
-        : `👋 Welcome back: ${username} is already a collaborator.`;
-
-    const postResponse = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        channel: channelId,
-        text: message,
-      }),
-    });
-
-    interface SlackPostResponse {
-      ok: boolean;
-      error?: string;
-    }
-    const postData = (await postResponse.json()) as SlackPostResponse;
-    if (!postData.ok) {
-      throw new Error(`Failed to send message: ${postData.error}`);
-    }
-
-    console.log("Slack DM sent successfully");
-  } catch (error) {
-    console.error("Failed to send Slack DM:", error);
   }
 }
