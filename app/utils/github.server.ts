@@ -146,6 +146,25 @@ export async function addCollaborator(
   username: string,
   env: GitHubEnv
 ): Promise<{ status: number; invitationStatus: string }> {
+  // First, check if user is already a collaborator
+  // This helps us provide better error messages
+  const checkResponse = await fetch(
+    `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
+    {
+      headers: {
+        Authorization: `Bearer ${env.GITHUB_PAT}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": GITHUB_USER_AGENT,
+      },
+    }
+  );
+
+  // If user is already a collaborator, return early
+  if (checkResponse.status === 204) {
+    return { status: 204, invitationStatus: "existing" };
+  }
+
+  // Proceed with adding the collaborator
   const addCollaboratorResponse = await fetch(
     `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
     {
@@ -166,6 +185,29 @@ export async function addCollaborator(
     return { status: 204, invitationStatus: "existing" };
   } else if (addCollaboratorResponse.status === 422) {
     return { status: 422, invitationStatus: "pending" };
+  } else if (addCollaboratorResponse.status === 404) {
+    // 404 could mean the user doesn't exist or permissions issue
+    // Check if the user is already a collaborator as a fallback
+    const verifyResponse = await fetch(
+      `https://api.github.com/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/collaborators/${username}`,
+      {
+        headers: {
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": GITHUB_USER_AGENT,
+        },
+      }
+    );
+    
+    if (verifyResponse.status === 204) {
+      // User is already a collaborator
+      return { status: 204, invitationStatus: "existing" };
+    }
+    
+    // User genuinely not found or permission issue
+    throw new Error(
+      `GITHUB_USER_NOT_FOUND: Unable to add GitHub user '${username}' to the repository. Please verify the username is correct.`
+    );
   } else {
     // This helps capture error details from GitHub API
     let errorData;
@@ -175,7 +217,7 @@ export async function addCollaborator(
       errorData = await addCollaboratorResponse.text();
     }
     throw new Error(
-      `GitHub API error: ${addCollaboratorResponse.status} - ${JSON.stringify(errorData)}`
+      `GITHUB_API_ERROR: Unable to process your request. Please contact support if this issue persists. (Status: ${addCollaboratorResponse.status})`
     );
   }
 }
