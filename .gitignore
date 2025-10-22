@@ -33,5 +33,6 @@ CLAUDE.md
 
 # Ignore storybook build output for now.
 storybook-static/**
-# Ignore build files.
-*tsconfig.cloudflare.tsbuildinfo
+
+# Ignore TypeScript build info files
+*.tsbuildinfo
