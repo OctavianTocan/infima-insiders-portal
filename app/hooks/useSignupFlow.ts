@@ -57,6 +57,8 @@ export interface SignupFlowState {
 export interface SignupFlowActions {
   /** Navigate back to Discord OAuth step */
   goToDiscord: () => void;
+  /** Navigate to support request form */
+  goToSupportRequest: () => void;
   /** Handle successful support request submission */
   handleSupportSubmitted: (requestId: string) => void;
   /** Start the signup flow over */
@@ -195,6 +197,11 @@ export function useSignupFlow(
     window.history.replaceState({}, document.title, window.location.pathname);
   }, []);
 
+  const goToSupportRequest = useCallback(() => {
+    setCurrentStep("support-request");
+    setError(null);
+  }, []);
+
   const handleSupportSubmitted = useCallback((requestId: string) => {
     setSupportRequestId(requestId);
     setCurrentStep("complete");
@@ -222,6 +229,7 @@ export function useSignupFlow(
     error,
     // Actions
     goToDiscord,
+    goToSupportRequest,
     handleSupportSubmitted,
     startOver,
     clearError,
