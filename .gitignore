@@ -4,8 +4,8 @@ node_modules/**
 dist/**
 build/**
 
-# TypeScript declaration files
-**/*.d.ts
+# Keep the generated wrangler types, so this works in a clean clone of the project. 
+# **/*.d.ts
 
 # Cloudflare Wrangler files
 .wrangler/**

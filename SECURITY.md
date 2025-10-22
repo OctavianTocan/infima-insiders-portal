@@ -27,6 +27,7 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 - `wrangler.jsonc` - Generated configuration (already gitignored)
 
 **Managing secrets:**
+
 ```bash
 # CORRECT: Use Cloudflare secrets for production
 npx wrangler secret put API_KEY
@@ -37,37 +38,44 @@ wrangler secret put API_KEY
 ### Code Security
 
 **Input Validation:**
+
 - Always validate and sanitize user input
 - Use TypeScript types and Zod schemas for runtime validation
 - Never trust data from external sources (form submissions, API requests)
 
 **Dependencies:**
+
 - Regularly update dependencies to patch security vulnerabilities
 - Run `npm audit` before committing changes
 - Review dependency changes in pull requests
 
 **CORS Configuration:**
-- Only allow trusted origins in CORS headers
-- Avoid using wildcards (`*`) in production
-- Review CORS settings in [src/index.ts](src/index.ts)
+
+- This application does not require CORS headers as it handles all API interactions server-side
+- No cross-origin requests are made from the frontend
+- OAuth flows use redirects instead of API calls
 
 **Rate Limiting:**
+
 - Implement rate limiting to prevent abuse
 - Monitor Cloudflare Workers analytics for unusual patterns
 
 ### Cloudflare-Specific Security
 
 **KV Storage:**
+
 - Never store sensitive personal information without encryption
 - Use appropriate TTLs to minimize data retention
 - Review KV bindings in wrangler configuration
 
 **API Routes:**
+
 - Validate all incoming requests
 - Use appropriate HTTP methods (POST for mutations)
 - Return appropriate error codes without exposing internals
 
 **Environment Variables:**
+
 - Use Cloudflare Workers secrets for sensitive values
 - Never log environment variables or secrets
 - Rotate API keys regularly
@@ -86,10 +94,10 @@ Before submitting a PR, verify:
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| Latest  | :white_check_mark: |
-| < Latest| :x:                |
+| Version  | Supported          |
+| -------- | ------------------ |
+| Latest   | :white_check_mark: |
+| < Latest | :x:                |
 
 We recommend always using the latest version of this project for the most up-to-date security patches.
 
