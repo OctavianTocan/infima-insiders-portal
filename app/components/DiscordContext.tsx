@@ -110,7 +110,7 @@ const initialState: DiscordState = {
   verificationStatus: "idle",
   supportRequestStatus: "idle",
   config: {
-    inviteLink: "https://discord.gg/your-server",
+    inviteLink: "https://discord.gg/sqPFPe2uuU",
   },
 };
 
