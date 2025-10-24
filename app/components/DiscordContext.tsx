@@ -55,6 +55,13 @@ type VerificationStatus = "idle" | "verifying" | "success" | "error";
  */
 type SupportRequestStatus = "idle" | "submitting" | "submitted" | "error";
 
+/*
+ * The Discord configuration info that we load from environment variables.
+ */
+interface DiscordConfig {
+  inviteLink: string;
+}
+
 /**
  * Complete Discord authentication state
  *
@@ -71,6 +78,8 @@ interface DiscordState {
   verificationStatus: VerificationStatus;
   /** Support request submission status */
   supportRequestStatus: SupportRequestStatus;
+  /** Discord configuration loaded from environment */
+  config: DiscordConfig;
 }
 
 // --- ACTION TYPES --- //
@@ -100,6 +109,9 @@ const initialState: DiscordState = {
   error: null,
   verificationStatus: "idle",
   supportRequestStatus: "idle",
+  config: {
+    inviteLink: "https://discord.gg/sqPFPe2uuU",
+  },
 };
 
 // --- REDUCER --- //
@@ -194,7 +206,9 @@ const DiscordContext = createContext<DiscordContextType | undefined>(undefined);
 /**
  * Discord context provider props
  */
-interface DiscordProviderProps extends ContextProviderProps {}
+interface DiscordProviderProps extends ContextProviderProps {
+  // No config override needed - invite links passed as component props
+}
 
 /**
  * Discord context provider component

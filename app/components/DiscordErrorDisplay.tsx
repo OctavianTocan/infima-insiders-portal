@@ -65,7 +65,7 @@ interface DiscordErrorDisplayProps extends BaseComponentProps {
   userRoles?: DiscordRole[];
   /** Additional error details from Discord API */
   errorDetails?: string | null;
-  /** Discord server invite link */
+  /** Discord server invite link (overrides context default) */
   discordInviteLink?: string;
   /** Whether the error can be dismissed */
   dismissible?: boolean;
@@ -127,7 +127,7 @@ export default function DiscordErrorDisplay({
   username: propUsername,
   userRoles: propUserRoles,
   errorDetails: propErrorDetails,
-  discordInviteLink = "https://discord.gg/sqPFPe2uuU", // TODO: Replace with actual invite
+  discordInviteLink: propDiscordInviteLink,
   dismissible = true,
   onDismiss,
   onRetry,
@@ -136,11 +136,15 @@ export default function DiscordErrorDisplay({
 }: DiscordErrorDisplayProps): React.ReactElement | null {
   // WHY: Get error state from context if not provided as props
   const { state } = useDiscord();
+  // We need this for the invite link, really.
+  const { config } = state;
 
   const error = propError || state.error;
   const username = propUsername || state.user?.username;
   const userRoles = propUserRoles || state.user?.roles;
   const errorDetails = propErrorDetails;
+  // WHY: Use prop value if provided, otherwise fall back to context
+  const discordInviteLink = propDiscordInviteLink || config.inviteLink;
 
   // WHY: Early return prevents rendering empty error states
   if (!error) return null;
@@ -164,8 +168,12 @@ export default function DiscordErrorDisplay({
   };
 
   // WHY: Map severity to MessageType
-  const messageType = errorConfig.severity === "info" ? "info" : 
-                     errorConfig.severity === "warning" ? "warning" : "error";
+  const messageType =
+    errorConfig.severity === "info"
+      ? "info"
+      : errorConfig.severity === "warning"
+        ? "warning"
+        : "error";
 
   return (
     <div className={`discord-error-display ${className}`} data-testid={testId}>
@@ -174,8 +182,17 @@ export default function DiscordErrorDisplay({
         type={messageType}
         dismissible={dismissible}
         onDismiss={onDismiss}
-        actionText={errorConfig.actionText || (errorConfig.canRetry ? "Try Again" : undefined)}
-        onAction={errorConfig.actionUrl ? handleAction : (errorConfig.canRetry ? onRetry : undefined)}
+        actionText={
+          errorConfig.actionText ||
+          (errorConfig.canRetry ? "Try Again" : undefined)
+        }
+        onAction={
+          errorConfig.actionUrl
+            ? handleAction
+            : errorConfig.canRetry
+              ? onRetry
+              : undefined
+        }
       />
       {errorDetails && (
         <details className="error-details">

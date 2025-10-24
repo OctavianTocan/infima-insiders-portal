@@ -1,6 +1,3 @@
-// Main flow component (recommended usage)
-export { default as DiscordVerificationFlow } from "./DiscordVerificationFlow";
-
 // Context and hook
 export { DiscordProvider, useDiscord } from "./DiscordContext";
 export type { DiscordUser, DiscordState } from "./DiscordContext";
@@ -10,7 +7,13 @@ export { default as DiscordOAuthButton } from "./DiscordOAuthButton";
 export { default as DiscordErrorDisplay } from "./DiscordErrorDisplay";
 export { default as SupportRequestForm } from "./SupportRequestForm";
 export { ConsolidatedErrorDisplay } from "./ConsolidatedErrorDisplay";
-export { default as ErrorMessageDisplay, ErrorMessage, SuccessMessage, WarningMessage, InfoMessage } from "./ErrorMessageDisplay";
+export {
+  default as ErrorMessageDisplay,
+  ErrorMessage,
+  SuccessMessage,
+  WarningMessage,
+  InfoMessage,
+} from "./ErrorMessageDisplay";
 export {
   default as DiscordOAuthStep,
   DiscordOAuthStepWithMessage,

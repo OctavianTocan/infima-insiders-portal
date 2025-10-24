@@ -15,6 +15,7 @@ import {
   InfoSection,
   FooterLinks,
   ErrorMessageDisplay,
+  DiscordErrorDisplay,
 } from "../components";
 import { useSignupFlow } from "../hooks/useSignupFlow";
 import {
@@ -98,6 +99,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     discordVerified: discordVerified === "true",
     userRoles: parsedUserRoles,
     errorDetails,
+    discordConfig: {
+      inviteLink: env.DISCORD_GUILD_INVITE_LINK,
+    },
     showSupport,
   };
 }
@@ -156,7 +160,8 @@ export async function action({ request, context }: Route.ActionArgs) {
           ? discordUsernameValue.trim()
           : undefined,
       verificationError:
-        typeof verificationErrorValue === "string" && verificationErrorValue.trim()
+        typeof verificationErrorValue === "string" &&
+        verificationErrorValue.trim()
           ? verificationErrorValue.trim()
           : undefined,
     };
@@ -169,7 +174,6 @@ export async function action({ request, context }: Route.ActionArgs) {
       return { success: false, error: (submissionError as Error).message };
     }
   }
-
 
   return { success: false, error: "Unknown action type" };
 }
@@ -310,9 +314,9 @@ export default function SignupPage({
     goToSupportRequest,
     clearError,
   } = useSignupFlow(loaderData, actionData);
-  const supportStepError = currentStep === "support-request" ? error : null;
   const shouldShowGlobalError =
     Boolean(error) && currentStep !== "support-request";
+  const { discordConfig } = loaderData;
 
   /**
    * Initiates GitHub OAuth login flow
@@ -348,17 +352,38 @@ export default function SignupPage({
             <StepIndicator currentStep={currentStep} />
           )}
 
-          {/* WHY: Single error display prevents UI clutter */}
-          {shouldShowGlobalError && (
-            <ErrorMessageDisplay
-              message={error || "An error occurred"}
-              type="error"
-              dismissible
-              onDismiss={clearError}
-              actionText={currentStep === "discord-oauth" ? "Try Again" : undefined}
-              onAction={currentStep === "discord-oauth" ? goToDiscord : undefined}
-            />
-          )}
+          {/* WHY: Use Discord-specific error display for Discord OAuth errors */}
+          {shouldShowGlobalError &&
+            currentStep === "discord-oauth" &&
+            discordError && (
+              <DiscordErrorDisplay
+                error={discordError}
+                username={discordUsername}
+                userRoles={userRoles}
+                errorDetails={errorDetails}
+                discordInviteLink={discordConfig?.inviteLink}
+                dismissible
+                onDismiss={clearError}
+                onRetry={goToDiscord}
+              />
+            )}
+
+          {/* WHY: Use generic error display for other errors */}
+          {shouldShowGlobalError &&
+            !(currentStep === "discord-oauth" && discordError) && (
+              <ErrorMessageDisplay
+                message={error || "An error occurred"}
+                type="error"
+                dismissible
+                onDismiss={clearError}
+                actionText={
+                  currentStep === "discord-oauth" ? "Try Again" : undefined
+                }
+                onAction={
+                  currentStep === "discord-oauth" ? goToDiscord : undefined
+                }
+              />
+            )}
 
           {/* Main signup flow component */}
           <SignupFlow
