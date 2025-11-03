@@ -1,0 +1,127 @@
+openapi: 3.1.0
+info:
+  title: Infima Games Insider Signup Returning User Flow
+  version: 0.1.0
+servers:
+  - url: https://insiders.infima-games.com
+paths:
+  /signup:
+    get:
+      summary: Render signup experience with returning-user fast path
+      description: |
+        Loader inspects the signed returning-user session cookie and calls downstream
+        Discord/GitHub services to determine the correct UI state. When the session is
+        valid and access is confirmed, the response contains the welcome payload; otherwise
+        the standard multi-step flow data is returned.
+      responses:
+        "200":
+          description: Signup payload for client-side rendering
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CollaboratorResponse"
+                  - $ref: "#/components/schemas/PendingResponse"
+                  - $ref: "#/components/schemas/NewUserResponse"
+                  - $ref: "#/components/schemas/SupportResponse"
+        "401":
+          description: Session rejected due to invalid signature or expiration
+        "502":
+          description: Downstream Discord or GitHub API unavailable
+  /internal/discord/members/{discordUsername}/roles:
+    get:
+      summary: Fetch Discord roles for a username via bot worker
+      parameters:
+        - in: path
+          name: discordUsername
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Role list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      type: string
+        "404":
+          description: Username not found in guild
+  /internal/github/collaborators/{githubUsername}:
+    get:
+      summary: Check collaborator status using admin PAT proxy
+      parameters:
+        - in: path
+          name: githubUsername
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Collaborator status information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubStatus"
+        "404":
+          description: GitHub user not found or inaccessible
+components:
+  schemas:
+    CollaboratorResponse:
+      type: object
+      properties:
+        state:
+          const: collaborator
+        discordUsername:
+          type: string
+        memberSince:
+          type: string
+        cta:
+          $ref: "#/components/schemas/CallToAction"
+    PendingResponse:
+      type: object
+      properties:
+        state:
+          const: pending
+        discordUsername:
+          type: string
+        invitationUrl:
+          type: string
+    NewUserResponse:
+      type: object
+      properties:
+        state:
+          const: new
+    SupportResponse:
+      type: object
+      properties:
+        state:
+          const: support
+        reason:
+          type: string
+    CallToAction:
+      type: object
+      required: [label, href]
+      properties:
+        label:
+          type: string
+        href:
+          type: string
+        openInNewTab:
+          type: boolean
+    GitHubStatus:
+      type: object
+      properties:
+        isCollaborator:
+          type: boolean
+        hasPendingInvitation:
+          type: boolean
+        invitationsCheckedAt:
+          type: string
+          format: date-time
