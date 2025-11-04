@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Improve experience for users who have already completed signup by detecting their existing GitHub collaborator status and showing a simplified welcome back page with direct repository access instead of redundant signup steps"
 
+## Clarifications
+
+### Session 2025-11-04
+
+- Q: When a returning user with an expired or tampered session cookie visits the signup page, what should the system do? → A: Log the event for security monitoring, treat as new session, show standard flow.
+- Q: If Discord bot API or GitHub API takes longer than 2 seconds during validation, what should the system do? → A: Wait up to 3 seconds; if still loading, show error message and fall back to standard flow.
+- Q: User Story 2 mentions "advanced options" to restart GitHub OAuth flow. Is this feature a priority for launch, or can it be deferred? → A: Defer to post-launch (scope it out of MVP).
+- Q: FR-014 specifies "log returning user visits for analytics without storing PII long-term." What should be logged and for how long? → A: Timestamp + event type (collaborator/pending/new) + API response times; retain for 90 days.
+- Q: Should the session cookie's 30-90 day expiration window be fixed or user-configurable? → A: Configurable via `SESSION_EXPIRY_DAYS` environment variable; default 90 days.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Existing Collaborator Welcome Back (Priority: P1)
@@ -35,7 +45,8 @@ A user who has completed Discord verification and received a GitHub invitation b
 
 1. **Given** a user has completed Discord verification AND has a pending GitHub invitation, **When** they visit the signup page, **Then** they see "You have a pending invitation! Check your GitHub invitations to accept it." with a link to GitHub invitations
 2. **Given** a user sees the pending invitation message, **When** they click the invitation link, **Then** they are redirected to their GitHub repository invitations page
-3. **Given** a user with a pending invitation wants to re-initiate the process, **When** they access the advanced options, **Then** they can restart the GitHub OAuth flow
+
+**Note**: The ability to restart GitHub OAuth flow from the pending invitation state is deferred to a post-launch iteration. For MVP, the pending invitation flow directs users to accept via GitHub's native invitations interface.
 
 ---
 
@@ -92,7 +103,7 @@ A first-time user who has never completed the signup process visits the page and
 - **FR-011**: System MUST maintain persistent authentication sessions (via secure cookies or similar mechanism) so returning users do NOT need to re-authenticate with Discord on subsequent visits
 - **FR-012**: System MUST persist user session data across days/weeks to recognize returning users without requiring re-login
 - **FR-013**: System MUST use server-side verification for collaborator status to prevent client-side spoofing
-- **FR-014**: System MUST log returning user visits for analytics without storing personally identifiable information long-term
+- **FR-014**: System MUST log returning user visits for analytics without storing personally identifiable information long-term. Log payload: timestamp, event type (collaborator/pending/new), and API response times. Logs retained for 90 days.
 
 ### Key Entities
 
@@ -127,7 +138,7 @@ A first-time user who has never completed the signup process visits the page and
 - **Assumption 1**: Users have cookies enabled and accept persistent cookies (required for session storage)
 - **Assumption 2**: GitHub API collaborator endpoint (`/repos/{owner}/{repo}/collaborators/{username}`) will remain stable and respond within 1-2 seconds
 - **Assumption 3**: The existing Discord OAuth integration can provide the user's Discord username and the completion timestamp can be captured during initial signup
-- **Assumption 4**: Persistent session cookies with 30-90 day expiration are acceptable for this use case (standard for "remember me" functionality)
+- **Assumption 4**: Persistent session cookies with configurable expiration (via `SESSION_EXPIRY_DAYS` environment variable, default 90 days) are acceptable for this use case (standard for "remember me" functionality)
 - **Assumption 5**: Users accessing the page are using modern browsers with JavaScript enabled (consistent with existing app requirements)
 - **Assumption 6**: The current Cloudflare Workers environment has sufficient execution time for real-time Discord role and GitHub collaborator validation (estimated 1-2 seconds total)
 - **Assumption 7**: 2-second validation delay on page load is acceptable user experience with loading spinner
@@ -137,11 +148,11 @@ A first-time user who has never completed the signup process visits the page and
 ### Security Considerations
 
 - **Security-001**: Persistent session cookies MUST be httpOnly, secure, and use SameSite attributes to prevent XSS and CSRF attacks
-- **Security-002**: Session tokens MUST be cryptographically secure and include signature validation to prevent tampering
+- **Security-002**: Session tokens MUST be cryptographically secure and include signature validation to prevent tampering. On signature validation failure, log the event for security monitoring, treat the session as invalid, and proceed with the standard signup flow without displaying technical error details to the user.
 - **Security-003**: Discord identity verification from OAuth flow MUST be stored securely in session and validated on each request
 - **Security-004**: Discord role AND GitHub collaborator status MUST be re-validated on every page load using stored usernames (Discord bot API for role check, GitHub API with admin PAT for collaborator check) to ensure access hasn't been revoked
 - **Security-005**: Direct repository links MUST point to the public GitHub repository page, not expose any private access tokens or credentials
-- **Security-006**: Session expiration MUST be enforced (suggested 30-90 days) with automatic cleanup of expired sessions
+- **Security-006**: Session expiration MUST be enforced using the `SESSION_EXPIRY_DAYS` environment variable (default 90 days) with automatic cleanup of expired sessions
 - **Security-007**: Error messages MUST NOT reveal repository structure, collaborator lists, or internal API details to potential attackers
 
 ### Performance Considerations
@@ -150,6 +161,7 @@ A first-time user who has never completed the signup process visits the page and
 - **Performance-002**: Show loading spinner while validation occurs to provide immediate user feedback during the 1-2 second validation period
 - **Performance-003**: Cache validation results within the same session (5 minutes) to avoid redundant API calls if user refreshes page
 - **Performance-004**: Welcome screen should be lightweight and fast-loading (minimal dependencies)
+- **Performance-005**: If validation APIs take longer than 3 seconds total, show a user-friendly error message ("We're having trouble verifying your access. Please try again.") and fall back to the standard signup flow without blocking access
 
 ### User Experience Principles
 
