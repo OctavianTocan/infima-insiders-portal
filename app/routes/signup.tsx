@@ -322,14 +322,18 @@ export default function SignupPage({
    * Initiates GitHub OAuth login flow
    *
    * Constructs the GitHub OAuth URL with proper scopes and redirects
-   * the user to GitHub for authentication.
+   * the user to GitHub for authentication. Passes Discord username in state parameter.
    */
   const handleGitHubLogin = () => {
+    // WHY: Pass Discord username through OAuth state parameter to include in Slack notification
+    const stateData = verifiedDiscordUsername ? btoa(JSON.stringify({ discordUsername: verifiedDiscordUsername })) : "";
+    
     const authUrl = [
       "https://github.com/login/oauth/authorize",
       `?client_id=${clientId}`,
       `&redirect_uri=${encodeURIComponent(redirectUri)}`,
       "&scope=read:user",
+      stateData ? `&state=${encodeURIComponent(stateData)}` : "",
     ].join("");
 
     window.location.href = authUrl;

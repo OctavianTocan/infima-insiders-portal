@@ -33,6 +33,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   console.log("OAuth callback received with code:", code);
 
   let username = "unknown";
+  let discordUsername: string | undefined = undefined;
+
+  // WHY: Extract Discord username from state parameter passed during OAuth initiation
+  try {
+    if (state) {
+      const decodedState = JSON.parse(atob(state));
+      discordUsername = decodedState.discordUsername;
+    }
+  } catch (stateError) {
+    console.warn("Failed to parse state parameter:", stateError);
+    // Continue without Discord username - not critical for signup flow
+  }
 
   try {
     // Validate required environment variables
@@ -109,9 +121,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     if (shouldSendSlackNotification) {
       try {
-        const signupStatus = isCollaborator ? "success" : "partial";
+        // WHY: Mark as success if user is collaborator OR has pending invitation (signup flow completed successfully)
+        const signupStatus = (isCollaborator || hasPendingInvitation || redirectToGitHubInvitations) ? "success" : "partial";
         const slackPayload = createSignupNotificationPayload({
           username,
+          discordUsername, // WHY: Include Discord username from state parameter
           githubUsername: username,
           status: signupStatus,
           timestamp: new Date(),
